@@ -1,0 +1,19 @@
+type: story
+title: 工地的一天
+pages:
+  - image: p01.png
+    say: 清晨，太阳出来了，工地上静悄悄的。
+  - image: p02.png
+    say: 挖掘机第一个来上班，挖呀挖，挖出一个大坑。
+  - image: p03.png
+    say: 翻斗车装满泥土，轰隆隆地运走啦。
+  - image: p04.png
+    say: 铲车推呀推，把沙子推得平平的。
+  - image: p05.png
+    say: 水泥罐车转呀转，把水泥倒进坑里。
+  - image: p06.png
+    say: 吊车伸长手臂，把钢梁吊得高高的。
+  - image: p07.png
+    say: 大家一起忙了好多天，新房子盖好啦！
+  - image: p08.png
+    say: 天黑了，工程车们排好队，晚安！

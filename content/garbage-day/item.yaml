@@ -1,0 +1,17 @@
+type: story
+title: 垃圾车来啦
+pages:
+  - image: p01.png
+    say: 天亮啦，小朋友提着垃圾袋走出家门。
+  - image: p02.png
+    say: 把垃圾袋放进垃圾桶，盖好盖子。
+  - image: p03.png
+    say: 嘀嘀嘀，垃圾车来啦！
+  - image: p04.png
+    say: 垃圾车举起垃圾桶，举高高，哗啦啦，倒进去！
+  - image: p05.png
+    say: 一桶，两桶，三桶，全都倒干净啦。
+  - image: p06.png
+    say: 洒水车跟在后面，沙沙沙，把街道洗得干干净净。
+  - image: p07.png
+    say: 谢谢你，垃圾车！明天见！

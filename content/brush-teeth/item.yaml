@@ -1,0 +1,15 @@
+type: story
+title: 小熊刷牙
+pages:
+  - image: p01.png
+    say: 早上好！小熊起床啦，伸个大懒腰。
+  - image: p02.png
+    say: 拿起小牙刷，挤上一点点牙膏。
+  - image: p03.png
+    say: 上刷刷，下刷刷，左刷刷，右刷刷。
+  - image: p04.png
+    say: 喝一口水，咕噜咕噜，漱漱口。
+  - image: p05.png
+    say: 牙齿白白的，真干净！
+  - image: p06.png
+    say: 小熊笑一笑，去吃早饭啦。

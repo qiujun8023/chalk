@@ -1,0 +1,19 @@
+type: story
+title: 小猪睡不着
+pages:
+  - image: p01.png
+    say: 天黑了，小猪躺在床上，眼睛睁得大大的，睡不着。
+  - image: p02.png
+    say: 猪妈妈说：我们来数小羊吧。
+  - image: p03.png
+    say: 一只小羊，跳过栅栏。
+  - image: p04.png
+    say: 两只小羊，跳过栅栏。
+  - image: p05.png
+    say: 三只小羊，跳过栅栏。
+  - image: p06.png
+    say: 四只小羊，跳过栅栏。
+  - image: p07.png
+    say: 小猪打了个大哈欠，眼睛慢慢闭上了。
+  - image: p08.png
+    say: 嘘，小猪睡着啦。晚安。

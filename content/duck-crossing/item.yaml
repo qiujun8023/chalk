@@ -1,0 +1,19 @@
+type: story
+title: 小鸭子过马路
+pages:
+  - image: p01.png
+    say: 鸭妈妈带着五只小鸭子，要去池塘游泳。
+  - image: p02.png
+    say: 前面有一条大马路。嘎嘎，怎么过去呢？
+  - image: p03.png
+    say: 警车开来了，警察叔叔举起手：停一停！
+  - image: p04.png
+    say: 巴士停下来，后面的小汽车也停下来，大家等一等。
+  - image: p05.png
+    say: 鸭妈妈走在前面，一只小鸭子跟上。
+  - image: p06.png
+    say: 两只，三只，四只，一个跟着一个。
+  - image: p07.png
+    say: 第五只小鸭子走得最慢。快点快点，追上啦！
+  - image: p08.png
+    say: 扑通，扑通，小鸭子们跳进池塘。谢谢警察叔叔！

@@ -1,0 +1,14 @@
+# 组的顺序：每项对应 content/<名称>/item.yaml
+items:
+  - vehicles
+  - construction-day
+  - fire-rescue
+  - rainy-day
+  - brush-teeth
+  - good-night
+  - garbage-day
+  - duck-crossing
+  - get-dressed
+  - zoo-bus
+  - snowman
+  - sleepy-piggy

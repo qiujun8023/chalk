@@ -1,0 +1,17 @@
+type: story
+title: 堆雪人
+pages:
+  - image: p01.png
+    say: 下雪啦！白白的雪花，飘呀飘。
+  - image: p02.png
+    say: 穿上棉袄，戴上手套，去雪地里玩。
+  - image: p03.png
+    say: 滚呀滚，小雪球变成大雪球。
+  - image: p04.png
+    say: 再滚一个小雪球，放上去当脑袋。
+  - image: p05.png
+    say: 胡萝卜当鼻子，小石子当眼睛，树枝当小手。
+  - image: p06.png
+    say: 戴上帽子，围上围巾，雪人笑啦。
+  - image: p07.png
+    say: 天黑了。雪人，晚安，明天再来玩！

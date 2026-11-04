@@ -1,0 +1,15 @@
+type: story
+title: 晚安，小车车
+pages:
+  - image: p01.png
+    say: 天黑了，月亮出来了，星星眨眼睛。
+  - image: p02.png
+    say: 巴士送完最后一位乘客，回到车站睡觉啦。
+  - image: p03.png
+    say: 出租车关上顶灯，开进车库。
+  - image: p04.png
+    say: 洒水车忙了一整天，打了个大哈欠。
+  - image: p05.png
+    say: 警车也停好啦，警灯不亮了。
+  - image: p06.png
+    say: 小车车们都睡着了。晚安，宝贝。

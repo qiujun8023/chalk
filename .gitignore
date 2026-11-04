@@ -1,0 +1,9 @@
+/build/
+/content/.cache/
+/firmware/build/
+/firmware/managed_components/
+/firmware/sdkconfig
+/firmware/sdkconfig.old
+/firmware/.envrc
+/tools/chalk
+/firmware/.cache/
