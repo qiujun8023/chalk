@@ -22,13 +22,21 @@ idf_component_register(
     INCLUDE_DIRS "."
     PRIV_REQUIRES
         driver
-        esp_app_format
         esp_adc
         esp_driver_usb_serial_jtag
         esp_timer
         esp_psram
         json
 )
+
+# 固件版本每次编译都重新生成：取 git 提交号，esp_app_desc 里的版本只在 CMake 配置时更新。
+set(version_c ${CMAKE_CURRENT_BINARY_DIR}/version.c)
+add_custom_target(chalk_version
+    COMMAND ${CMAKE_COMMAND} -DOUT=${version_c} -DSRC=${CMAKE_CURRENT_SOURCE_DIR}/../..
+            -P ${CMAKE_CURRENT_SOURCE_DIR}/version.cmake
+    BYPRODUCTS ${version_c})
+target_sources(${COMPONENT_LIB} PRIVATE ${version_c})
+add_dependencies(${COMPONENT_LIB} chalk_version)
 
 # 内容镜像由 tools（chalk build）生成，idf.py flash 时一起烧到 storage 分区。
 set(content_image ${CMAKE_CURRENT_SOURCE_DIR}/../../build/storage.bin)

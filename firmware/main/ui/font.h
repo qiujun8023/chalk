@@ -13,6 +13,8 @@ class BitmapFont {
         return height_;
     }
     int Measure(const std::string& utf8) const;
+    // 这串字实际有像素的行范围（相对行框顶边，bottom 不含），用于按墨迹而不是行框对齐；没有可画的字返回 false。
+    bool InkRows(const std::string& utf8, int& top, int& bottom) const;
     // 在 (x, top) 处绘制一行字（默认黑字，white 为白字），top 是行框顶边；返回绘制宽度。缺字跳过。
     int Draw(uint8_t* fb, int x, int top, const std::string& utf8, bool white = false) const;
 

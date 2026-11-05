@@ -1,0 +1,14 @@
+type: story
+title: 悯农
+author: 李绅
+pages:
+  - image: p01.png
+    say: 锄禾日当午。
+  - image: p02.png
+    say: 汗滴禾下土。
+  - image: p03.png
+    say: 谁知盘中餐。
+  - image: p04.png
+    say: 粒粒皆辛苦。
+  - image: p05.png
+    say: 锄禾日当午，汗滴禾下土。谁知盘中餐，粒粒皆辛苦。

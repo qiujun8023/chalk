@@ -1,0 +1,14 @@
+type: story
+title: 静夜思
+author: 李白
+pages:
+  - image: p01.png
+    say: 床前明月光。
+  - image: p02.png
+    say: 疑是地上霜。
+  - image: p03.png
+    say: 举头望明月。
+  - image: p04.png
+    say: 低头思故乡。
+  - image: p05.png
+    say: 床前明月光，疑是地上霜。举头望明月，低头思故乡。

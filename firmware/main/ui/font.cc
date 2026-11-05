@@ -71,6 +71,27 @@ int BitmapFont::Measure(const std::string& utf8) const {
     return w;
 }
 
+bool BitmapFont::InkRows(const std::string& utf8, int& top, int& bottom) const {
+    bool any = false;
+    for (size_t i = 0; i < utf8.size();) {
+        const Glyph* g = Find(NextCodepoint(utf8, i));
+        if (!g)
+            continue;
+        // 字形位图可能带空白行，逐行看有没有像素。
+        const int bpr = (g->w + 7) / 8;
+        for (int r = 0; r < g->h && g->off + (r + 1) * bpr <= bits_.size(); ++r) {
+            const uint8_t* row = bits_.data() + g->off + r * bpr;
+            if (std::all_of(row, row + bpr, [](uint8_t b) { return b == 0; }))
+                continue;
+            const int y = g->y + r;
+            top         = any ? std::min(top, y) : y;
+            bottom      = any ? std::max(bottom, y + 1) : y + 1;
+            any         = true;
+        }
+    }
+    return any;
+}
+
 int BitmapFont::Draw(uint8_t* fb, int x, int top, const std::string& utf8, bool white) const {
     constexpr int W   = EpdSsd1683::kWidth;
     constexpr int H   = EpdSsd1683::kHeight;

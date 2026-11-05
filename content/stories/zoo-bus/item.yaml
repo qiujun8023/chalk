@@ -1,0 +1,21 @@
+type: story
+title: 坐巴士去动物园
+pages:
+  - image: p01.png
+    say: 今天，小朋友和妈妈坐巴士去动物园。
+  - image: p02.png
+    say: 巴士开动啦，嘀嘀！趴在窗边往外看。
+  - image: p03.png
+    say: 到站啦，动物园到了！
+  - image: p04.png
+    say: 大象的鼻子长又长，噗，喷出一股水。
+  - image: p05.png
+    say: 长颈鹿的脖子长长，吃到高高的树叶。
+  - image: p06.png
+    say: 小猴子荡来荡去，吃香蕉。
+  - image: p07.png
+    say: 大熊猫抱着竹子，咔嚓，咔嚓。
+  - image: p08.png
+    say: 大狮子张大嘴巴：嗷呜！
+  - image: p09.png
+    say: 玩累了，坐巴士回家，小朋友睡着啦。

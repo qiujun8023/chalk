@@ -21,38 +21,34 @@ int Int(const cJSON* obj, const char* key, int def) {
     return cJSON_IsNumber(v) ? v->valueint : def;
 }
 
-bool ParseItem(const cJSON* j, Item& item) {
+bool ParseEntry(const cJSON* j, Entry& e) {
     const std::string type = Str(j, "type");
-    item.id                = Str(j, "id");
-    item.name              = Str(j, "name");
-    item.title             = Str(j, "title");
+    e.name                 = Str(j, "name");
+    e.title_audio          = Str(j, "titleAudio");
     if (type == "story") {
-        item.type          = Type::kStory;
-        const cJSON* page  = nullptr;
+        e.kind            = Kind::kStory;
+        const cJSON* page = nullptr;
         cJSON_ArrayForEach(page, cJSON_GetObjectItemCaseSensitive(j, "pages")) {
-            item.pages.push_back({Str(page, "img"), Str(page, "audio")});
+            e.pages.push_back({Str(page, "img"), Str(page, "audio")});
         }
-        return !item.pages.empty();
+        return !e.pages.empty();
     }
-    if (type == "vehicles") {
-        item.type      = Type::kVehicles;
-        const cJSON* v = nullptr;
-        cJSON_ArrayForEach(v, cJSON_GetObjectItemCaseSensitive(j, "vehicles")) {
-            Vehicle vehicle{Str(v, "name"), Str(v, "base"), Str(v, "intro"), {}};
-            const cJSON* a = nullptr;
-            cJSON_ArrayForEach(a, cJSON_GetObjectItemCaseSensitive(v, "actions")) {
-                Action       action;
-                const cJSON* f = nullptr;
-                cJSON_ArrayForEach(f, cJSON_GetObjectItemCaseSensitive(a, "frames")) {
-                    action.frames.push_back({Str(f, "img"), Int(f, "ms", 0)});
-                }
-                vehicle.actions.push_back(std::move(action));
+    if (type == "vehicle") {
+        e.kind         = Kind::kVehicle;
+        e.base         = Str(j, "base");
+        e.intro        = Str(j, "intro");
+        const cJSON* a = nullptr;
+        cJSON_ArrayForEach(a, cJSON_GetObjectItemCaseSensitive(j, "actions")) {
+            Action       action;
+            const cJSON* f = nullptr;
+            cJSON_ArrayForEach(f, cJSON_GetObjectItemCaseSensitive(a, "frames")) {
+                action.frames.push_back({Str(f, "img"), Int(f, "ms", 0)});
             }
-            item.vehicles.push_back(std::move(vehicle));
+            e.actions.push_back(std::move(action));
         }
-        return !item.vehicles.empty();
+        return !e.base.empty();
     }
-    ESP_LOGW(kTag, "unknown item type=%s id=%s", type.c_str(), item.id.c_str());
+    ESP_LOGW(kTag, "unknown entry type=%s name=%s", type.c_str(), e.name.c_str());
     return false;
 }
 }  // namespace
@@ -83,15 +79,20 @@ bool Load(const std::string& root, Library& out) {
     out.volume_sound = Str(doc.get(), "volumeSound");
     out.font16       = Str(doc.get(), "font16");
     out.font12       = Str(doc.get(), "font12");
-    out.built        = Str(doc.get(), "built");
-    const cJSON* j   = nullptr;
-    cJSON_ArrayForEach(j, cJSON_GetObjectItemCaseSensitive(doc.get(), "items")) {
-        Item item;
-        if (ParseItem(j, item))
-            out.items.push_back(std::move(item));
+    const cJSON* g   = nullptr;
+    cJSON_ArrayForEach(g, cJSON_GetObjectItemCaseSensitive(doc.get(), "groups")) {
+        Group        group{Str(g, "name"), Str(g, "titleAudio"), {}};
+        const cJSON* j = nullptr;
+        cJSON_ArrayForEach(j, cJSON_GetObjectItemCaseSensitive(g, "entries")) {
+            Entry e;
+            if (ParseEntry(j, e))
+                group.entries.push_back(std::move(e));
+        }
+        if (!group.entries.empty())
+            out.groups.push_back(std::move(group));
     }
-    ESP_LOGI(kTag, "loaded items=%u", static_cast<unsigned>(out.items.size()));
-    return !out.items.empty();
+    ESP_LOGI(kTag, "loaded groups=%u", static_cast<unsigned>(out.groups.size()));
+    return !out.groups.empty();
 }
 
 }  // namespace library

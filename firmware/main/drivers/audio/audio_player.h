@@ -22,7 +22,7 @@ class AudioPlayer {
 
     bool Init(i2c_master_bus_handle_t i2c_bus, int volume);
 
-    // 返回本次播放的 token；文件读取失败返回 0。
+    // 返回本次播放的 token；文件读取失败时停下当前播放并返回 0。
     uint32_t Play(const std::string& path);
     void     Stop();
     bool     IsPlaying() const {
@@ -68,7 +68,6 @@ class AudioPlayer {
     uint32_t              next_token_    = 1;
     std::atomic<bool>     stop_flag_{false};
     std::atomic<bool>     playing_{false};
-    std::atomic<uint32_t> current_token_{0};
     std::function<void(uint32_t)> on_done_;
     TaskHandle_t                  task_ = nullptr;
 };

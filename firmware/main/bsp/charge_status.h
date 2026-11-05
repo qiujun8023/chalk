@@ -4,7 +4,6 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/semphr.h>
 #include <freertos/task.h>
-#include <atomic>
 #include <cstdint>
 #include <functional>
 
@@ -20,21 +19,20 @@ class ChargeStatus {
     struct Snapshot {
         State state;
         bool  power_present;
-        bool  charging;  // UI/LED charging indicator (includes no-battery)
+        bool  charging;  // 显示为充电中（含没装电池）
         bool  full;
         bool  no_battery;
     };
 
     void     Init(gpio_num_t detect_gpio, gpio_num_t full_gpio, int64_t now_ms);
-    void     StartTick();
-    void     StopTick();
+    void     StartTick();  // 启动后台轮询 task，状态变化时回调
     Snapshot Get() const;
-    // 回调在 Tick() 调用方上下文同步执行;只做 evt::Post 这类轻量转发。
+    // 回调在轮询 task 里同步执行，只做投递事件这类轻量转发。
     void OnStateChanged(std::function<void(const Snapshot&)> cb);
 
    private:
     static void TickTaskEntry(void* arg);
-    void        TickTaskLoop();
+    [[noreturn]] void TickTaskLoop();
     void        Tick(int64_t now_ms);
     void        UpdateSnapshot(State state, bool power_present, bool no_battery);
 
@@ -51,9 +49,6 @@ class ChargeStatus {
     Snapshot                             snapshot_{State::kNoPower, false, false, false, false};
     std::function<void(const Snapshot&)> on_state_changed_;
     SemaphoreHandle_t                    callback_mutex_ = nullptr;
-    std::atomic<bool>                    tick_running_{false};
-    TaskHandle_t                         tick_task_ = nullptr;
-    SemaphoreHandle_t                    tick_exit_ = nullptr;
 
     static constexpr int kPowerPresentHoldMs = 1000;
     static constexpr int kStableHighMs       = 400;

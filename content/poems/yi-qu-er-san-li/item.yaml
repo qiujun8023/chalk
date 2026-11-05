@@ -1,0 +1,14 @@
+type: story
+title: 一去二三里
+author: 邵雍
+pages:
+  - image: p01.png
+    say: 一去二三里。
+  - image: p02.png
+    say: 烟村四五家。
+  - image: p03.png
+    say: 亭台六七座。
+  - image: p04.png
+    say: 八九十枝花。
+  - image: p05.png
+    say: 一去二三里，烟村四五家。亭台六七座，八九十枝花。

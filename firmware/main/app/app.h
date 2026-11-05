@@ -11,17 +11,22 @@
 #include "app/saved_state.h"
 #include "drivers/display/epd_ssd1683.h"
 #include "power/sleep.h"
-#include "ui/font.h"
 #include "ui/status_bar.h"
 
-// 界面状态机，跑在单独的 task 里。内容按组（工程车、绘本……）组织，平时显示某一组的当前页 / 当前车；
-// 上下同按进组列表，三键同按进设置。刷屏是阻塞的，期间到达的按键只保留最后一个。
+// 界面状态机，跑在单独的 task 里。内容分组（工程车、小故事、古诗），平时显示当前组当前项（车或故事）的画面；
+// 上下短按组内切换，长按切组，确认从头再播；上下同按进列表，三键同按进设置。
+// 刷屏是阻塞的，期间到达的按键只保留最后一个。
 class App {
    public:
     void Run(power::WakeSource wake);
 
    private:
     enum class Mode { kBrowse, kList, kSettings };
+    enum class ListLevel { kEntries, kGroups };  // 列表先显示当前组的各项，「返回」到组列表
+    // 播放阶段：先念完开场（组名、标题），再念当前页。
+    enum class Stage { kIdle, kIntro, kPage };
+    // 朗读结束后到 auto_at_ms_ 时要做的事。
+    enum class Auto { kNone, kIntro, kSpeak, kNextPage };
 
     void Restore(power::WakeSource wake);
     void Handle(const Event& e);
@@ -29,12 +34,16 @@ class App {
     void HandleList(Ev ev, int steps);
     void HandleSettings(Ev ev, int steps);
 
-    void Step(int delta);         // 组内下一个
+    void SwitchEntry(int delta);  // 组内上一项 / 下一项
     void SwitchGroup(int delta);  // 上一组 / 下一组
-    void SelectGroup(int group);  // 切到某一组，从第一页开始
-    void ShowCurrent(bool speak);
-    void SpeakCurrent();
+    void SelectEntry(int group, int entry);
+    // 从第一页开始播当前项：先依次念 intro（组名、故事标题），再念第一页。
+    void StartEntry(bool with_group_title);
+    void ShowPage(bool speak);  // 画当前页；speak 时开始朗读（车还播动画）
+    void SpeakCurrent();        // 画面已在屏上，只开始朗读和动画
+    void Narrate();             // 开始念当前页（车是介绍）
     void OnAudioDone(uint32_t token);
+    void Schedule(Auto what, int delay_ms);
     void RunAuto();
     void PlayAction();
     bool HasPendingButton();
@@ -42,28 +51,31 @@ class App {
     void EnterList();
     void EnterSettings();
     void ExitMenu(bool resume);  // 回到内容；resume 时接着朗读 / 播放当前页
+    void Stop();                 // 停下朗读和待执行的自动播放
     void ChangeVolume(int delta);
-    void ResetProgress();
     void RefreshStatusBar();
     void SleepNow();
 
     // 画一帧：内容图 + 状态栏。
-    bool             Render(const std::string& img, EpdSsd1683::Mode mode);
-    // 画组列表 / 设置页；only_if_changed 时与屏上画面相同就不刷。
-    void             RenderMenu(EpdSsd1683::Mode mode, bool only_if_changed = false);
-    void             DrawSettingsFooter(uint8_t* fb);
+    void             Render(const std::string& img, EpdSsd1683::Mode mode);
+    // 画列表 / 设置页，默认局刷（残影换响应速度，与 slate 相同）；only_if_changed 时与屏上画面相同就不刷。
+    void             RenderMenu(EpdSsd1683::Mode mode = EpdSsd1683::Mode::kPartial, bool only_if_changed = false);
+    std::vector<std::pair<std::string, std::string>> InfoRows() const;
     EpdSsd1683::Mode NextMode() const;
     StatusBarState   CurrentBar() const;
     uint32_t         Play(const std::string& audio);
     bool             WaitNext(Event& out, TickType_t timeout);
+    int              ListRows() const;  // 列表行数，含「返回」
 
-    const library::Item& Group() const {
-        return lib_.items[group_];
+    const library::Group& Group() const {
+        return lib_.groups[group_];
     }
-    int& Position() {
-        return positions_[group_];
+    const library::Entry& Current() const {
+        return Group().entries[positions_[group_]];
     }
-    int Count() const;
+    bool IsStory() const {
+        return Current().kind == library::Kind::kStory;
+    }
 
     QueueHandle_t        queue_ = nullptr;
     library::Library     lib_;
@@ -72,14 +84,16 @@ class App {
     EpdSsd1683*          epd_   = nullptr;
     Mode                 mode_  = Mode::kBrowse;
     int                  group_ = 0;
-    std::vector<int>     positions_;
-    int                  action_cursor_   = 0;
-    int                  list_cursor_     = 0;  // 0 是「返回」，i 是第 i-1 组
+    std::vector<int>     positions_;  // 每组的当前项
+    int                  page_          = 0;  // 当前项（故事）的当前页
+    int                  action_cursor_ = 0;
+    ListLevel            list_level_    = ListLevel::kEntries;
+    int                  list_group_    = 0;  // 列表项层显示的组
+    int                  list_cursor_   = 0;  // 0 是「返回」，i 是第 i-1 行
     int                  settings_cursor_ = 0;
     bool                 editing_volume_  = false;
-    bool                 reset_armed_     = false;  // 重置进度已按过一次确认
     uint32_t             narration_token_ = 0;
-    std::string          shown_;  // 当前内容图（在组列表 / 设置页时是退出后要回到的那张）
+    std::string          shown_;  // 当前内容图（在列表 / 设置页时是退出后要回到的那张）
     StatusBarState       bar_;    // 屏幕上当前的状态栏
     std::vector<uint8_t> frame_;
     int64_t              last_input_ms_   = 0;
@@ -87,8 +101,9 @@ class App {
     int                  battery_pct_     = -1;
     bool                 charge_dirty_    = false;
 
-    // 自动播放：朗读结束后到 auto_at_ms_ 时翻到下一页；auto_speak_ 表示只开始播当前页（切组念完组名后）。
-    int64_t auto_at_ms_    = 0;
-    bool    auto_speak_    = false;
-    bool    title_playing_ = false;
+    Stage                    stage_ = Stage::kIdle;
+    std::vector<std::string> intro_;  // 开场要念的音频
+    size_t                   intro_next_ = 0;
+    Auto                     auto_       = Auto::kNone;
+    int64_t                  auto_at_ms_ = 0;
 };

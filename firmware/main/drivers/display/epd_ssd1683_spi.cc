@@ -14,60 +14,26 @@ namespace {
 constexpr char kTag[] = "epd";
 }
 
-// SPI 反复 free + reinit 是为了切换 DI 数据线方向(EPD 单数据线复用 MOSI/MISO):
-// 写命令/数据走 mosi_io_num=mosi_(发送),读温度时 miso_io_num=mosi_(同一物理引脚反向接收)。
-
-void EpdSsd1683::SpiPortInit() {
-    if (spi_ && spi_inited_) {
+// EPD 只有一根数据线 DI：写命令 / 数据时它是 MOSI，读温度时同一引脚反向当 MISO，所以读写之间要拆掉 SPI 总线重建。
+void EpdSsd1683::SpiPortInit(bool rx) {
+    if (spi_inited_) {
         ESP_ERROR_CHECK_WITHOUT_ABORT(spi_bus_remove_device(spi_));
         spi_ = nullptr;
-    }
-    if (spi_inited_) {
-        esp_err_t free_ret = spi_bus_free(spi_host_);
-        if (free_ret != ESP_OK && free_ret != ESP_ERR_INVALID_STATE) {
-            ESP_ERROR_CHECK(free_ret);
-        }
+        const esp_err_t err = spi_bus_free(spi_host_);
+        if (err != ESP_OK && err != ESP_ERR_INVALID_STATE)
+            ESP_ERROR_CHECK(err);
         spi_inited_ = false;
     }
     spi_bus_config_t b              = {};
-    b.miso_io_num                   = -1;
-    b.mosi_io_num                   = mosi_;
+    b.miso_io_num                   = rx ? mosi_ : -1;
+    b.mosi_io_num                   = rx ? -1 : mosi_;
     b.sclk_io_num                   = sclk_;
     b.quadwp_io_num                 = -1;
     b.quadhd_io_num                 = -1;
     b.max_transfer_sz               = kBufferLen * 2;
     spi_device_interface_config_t d = {};
     d.spics_io_num                  = -1;
-    d.clock_speed_hz                = 40 * 1000 * 1000;
-    d.mode                          = 0;
-    d.queue_size                    = 7;
-    ESP_ERROR_CHECK(spi_bus_initialize(spi_host_, &b, SPI_DMA_CH_AUTO));
-    ESP_ERROR_CHECK(spi_bus_add_device(spi_host_, &d, &spi_));
-    spi_inited_ = true;
-}
-
-void EpdSsd1683::SpiPortRxInit() {
-    if (spi_ && spi_inited_) {
-        ESP_ERROR_CHECK_WITHOUT_ABORT(spi_bus_remove_device(spi_));
-        spi_ = nullptr;
-    }
-    if (spi_inited_) {
-        esp_err_t free_ret = spi_bus_free(spi_host_);
-        if (free_ret != ESP_OK && free_ret != ESP_ERR_INVALID_STATE) {
-            ESP_ERROR_CHECK(free_ret);
-        }
-        spi_inited_ = false;
-    }
-    spi_bus_config_t b              = {};
-    b.miso_io_num                   = mosi_;  // DI 反向当 MISO 收数据
-    b.mosi_io_num                   = -1;
-    b.sclk_io_num                   = sclk_;
-    b.quadwp_io_num                 = -1;
-    b.quadhd_io_num                 = -1;
-    b.max_transfer_sz               = kBufferLen * 2;
-    spi_device_interface_config_t d = {};
-    d.spics_io_num                  = -1;
-    d.clock_speed_hz                = 8 * 1000 * 1000;  // 读时降速到 8 MHz
+    d.clock_speed_hz                = (rx ? 8 : 40) * 1000 * 1000;  // 读时降速到 8 MHz
     d.mode                          = 0;
     d.queue_size                    = 7;
     ESP_ERROR_CHECK(spi_bus_initialize(spi_host_, &b, SPI_DMA_CH_AUTO));
@@ -76,7 +42,7 @@ void EpdSsd1683::SpiPortRxInit() {
 }
 
 uint8_t EpdSsd1683::EpdRecvData() {
-    SpiPortRxInit();
+    SpiPortInit(/*rx=*/true);
     uint8_t           rx = 0;
     spi_transaction_t t  = {};
     t.length             = 8;
@@ -85,7 +51,7 @@ uint8_t EpdSsd1683::EpdRecvData() {
     gpio_set_level(cs_, 0);
     spi_device_polling_transmit(spi_, &t);
     gpio_set_level(cs_, 1);
-    SpiPortInit();
+    SpiPortInit(/*rx=*/false);
     return rx;
 }
 
@@ -114,9 +80,8 @@ void EpdSsd1683::SpiGpioInit() {
 }
 
 void EpdSsd1683::ReadBusy() {
-    // 5s 超时兜底:屏挂死/带线松了不会让刷新永久阻塞。
-    // 正常 full 刷 ~3s,partial ~1s,5s 留足余量。超时直接 panic 重启,
-    // 比挂死 + WDT 复位更可控,日志也更明确。
+    // 5 s 超时兜底：屏挂死、排线松了时不会让刷新永久阻塞。正常全刷约 1.2 s、局刷约 0.8 s。
+    // 超时直接重启，比挂死后等看门狗复位更可控，日志也更明确。
     constexpr int64_t kBusyTimeoutMs = 5000;
     const int64_t     start_ms       = time_utils::NowMs();
     while (gpio_get_level(busy_) == 0) {

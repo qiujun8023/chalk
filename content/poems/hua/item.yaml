@@ -1,0 +1,13 @@
+type: story
+title: 画
+pages:
+  - image: p01.png
+    say: 远看山有色。
+  - image: p02.png
+    say: 近听水无声。
+  - image: p03.png
+    say: 春去花还在。
+  - image: p04.png
+    say: 人来鸟不惊。
+  - image: p05.png
+    say: 远看山有色，近听水无声。春去花还在，人来鸟不惊。

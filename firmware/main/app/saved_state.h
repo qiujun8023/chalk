@@ -8,7 +8,8 @@
 struct SavedState {
     int                   volume = 70;
     int                   group  = 0;
-    std::vector<uint16_t> positions;  // 每组的当前页 / 当前车
+    int                   page   = 0;  // 当前组当前项的页
+    std::vector<uint16_t> positions;   // 每组的当前项
 
     bool Load(const std::string& path);
     bool Save(const std::string& path) const;

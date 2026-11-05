@@ -17,9 +17,6 @@ class Board {
 
     void Init();
 
-    BoardPowerBsp* power() {
-        return power_.get();
-    }
     ChargeStatus* charge() {
         return charge_.get();
     }

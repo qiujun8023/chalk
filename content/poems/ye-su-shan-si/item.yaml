@@ -1,0 +1,14 @@
+type: story
+title: 夜宿山寺
+author: 李白
+pages:
+  - image: p01.png
+    say: 危楼高百尺。
+  - image: p02.png
+    say: 手可摘星辰。
+  - image: p03.png
+    say: 不敢高声语。
+  - image: p04.png
+    say: 恐惊天上人。
+  - image: p05.png
+    say: 危楼高百尺，手可摘星辰。不敢高声语，恐惊天上人。

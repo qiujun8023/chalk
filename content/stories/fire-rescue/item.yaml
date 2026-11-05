@@ -1,0 +1,17 @@
+type: story
+title: 消防车救小猫
+pages:
+  - image: p01.png
+    say: 小猫爬上了高高的大树，下不来啦。喵——喵——
+  - image: p02.png
+    say: 消防车听到了，呜——呜——，开过来啦！
+  - image: p03.png
+    say: 消防车停在树下，把长长的梯子升起来。
+  - image: p04.png
+    say: 消防员叔叔爬上梯子，轻轻抱住了小猫。
+  - image: p05.png
+    say: 消防员叔叔抱着小猫，一步一步爬下梯子。
+  - image: p06.png
+    say: 小猫安全下来啦！谢谢你，消防车！
+  - image: p07.png
+    say: 消防车开回家，小猫挥挥爪子说：再见！

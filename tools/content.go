@@ -9,15 +9,21 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// content/library.yaml：组的顺序。
+// content/library.yaml：有哪些组、组内有哪些项，按列出的顺序播放。
 type librarySrc struct {
-	Items []string `yaml:"items"`
+	Groups []groupSrc `yaml:"groups"`
+}
+
+type groupSrc struct {
+	Title string   `yaml:"title"`
+	Items []string `yaml:"items"` // content/ 下含 item.yaml 的目录；vehicles 类型的项展开成其中的每一辆车
 }
 
 // content/<item>/item.yaml。
 type itemSrc struct {
 	Type     string       `yaml:"type"` // story | vehicles
 	Title    string       `yaml:"title"`
+	Author   string       `yaml:"author"` // 古诗作者，标题朗读成「诗名，作者」
 	Pages    []pageSrc    `yaml:"pages"`
 	Vehicles []vehicleSrc `yaml:"vehicles"`
 }

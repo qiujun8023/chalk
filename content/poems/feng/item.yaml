@@ -1,0 +1,14 @@
+type: story
+title: 风
+author: 李峤
+pages:
+  - image: p01.png
+    say: 解落三秋叶。
+  - image: p02.png
+    say: 能开二月花。
+  - image: p03.png
+    say: 过江千尺浪。
+  - image: p04.png
+    say: 入竹万竿斜。
+  - image: p05.png
+    say: 解落三秋叶，能开二月花。过江千尺浪，入竹万竿斜。

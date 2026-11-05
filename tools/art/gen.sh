@@ -2,10 +2,11 @@
 # 用 Codex 的图像生成画线稿，已存在的文件跳过；想重画某一张，删掉后再运行。
 #
 #   tools/art/gen.sh vehicles   按 vehicles.tsv 生成车辆关键帧：<车> <文件名> <改动>，基于该车 base.png 改图
-#   tools/art/gen.sh stories    按 stories.tsv 生成绘本插图：<故事> <文件名> <参考图> <画面>
+#   tools/art/gen.sh stories    按 stories.tsv 生成绘本插图：<目录> <文件名> <参考图> <画面>
+#   tools/art/gen.sh poems      按 poems.tsv 生成古诗插图，格式同 stories
 #
-# stories 的参考图：vehicle:<车> 用该车线稿；page:<路径> 用 content 下的某张图；first 用本故事的 p01.png。
-# 第一列相同的行按顺序画（绘本后面的页参考第 1 页保持角色一致），不同的组并行，并发数 JOBS 默认 6。
+# <目录> 相对 content/，如 stories/rainy-day。参考图：vehicle:<车> 用该车线稿；page:<路径> 用 content 下的某张图；
+# first 用本目录的 p01.png。第一列相同的行按顺序画（后面的页参考第 1 页保持角色一致），不同目录并行，并发数 JOBS 默认 6。
 # Codex 在临时目录里运行，只能看到参考图；日志在 build/art-logs/。
 set -uo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
@@ -16,8 +17,8 @@ mode=${1:-}
 style="纯黑粗线稿、白底，不要灰色、阴影、渐变、填色或文字"
 case $mode in
     vehicles) list="$here/vehicles.tsv" ;;
-    stories) list="$here/stories.tsv" ;;
-    *) echo "usage: $0 vehicles|stories" >&2; exit 2 ;;
+    stories | poems) list="$here/$mode.tsv" ;;
+    *) echo "usage: $0 vehicles|stories|poems" >&2; exit 2 ;;
 esac
 mkdir -p "$logs"
 

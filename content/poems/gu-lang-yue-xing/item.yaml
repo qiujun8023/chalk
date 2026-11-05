@@ -1,0 +1,14 @@
+type: story
+title: 古朗月行
+author: 李白
+pages:
+  - image: p01.png
+    say: 小时不识月。
+  - image: p02.png
+    say: 呼作白玉盘。
+  - image: p03.png
+    say: 又疑瑶台镜。
+  - image: p04.png
+    say: 飞在青云端。
+  - image: p05.png
+    say: 小时不识月，呼作白玉盘。又疑瑶台镜，飞在青云端。

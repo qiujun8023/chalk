@@ -39,6 +39,8 @@ def save_png(path, rows):
     png = b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", 400, 300, 1, 0, 0, 0, 0))
     png += chunk(b"IDAT", zlib.compress(raw)) + chunk(b"IEND", b"")
     open(path, "wb").write(png)
+
+
 KEEP = {"main", "app", "audio", "epd", "input", "library", "sleep", "state"}
 
 

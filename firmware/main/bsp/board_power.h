@@ -22,9 +22,7 @@ class BoardPowerBsp {
     void InitLed();
 
     void PowerAudioOn();
-    void PowerAudioOff();
     void VbatPowerOn();
-    void VbatPowerOff();
 
    private:
     const int audioPowerPin_;

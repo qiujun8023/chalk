@@ -34,13 +34,6 @@ void ChargeStatus::Init(gpio_num_t detect_gpio, gpio_num_t full_gpio, int64_t no
             configASSERT(callback_mutex_ != nullptr);
         }
     }
-    if (!tick_exit_) {
-        tick_exit_ = xSemaphoreCreateBinary();
-        if (!tick_exit_) {
-            ESP_LOGE(kTag, "tick exit semaphore create failed");
-            configASSERT(tick_exit_ != nullptr);
-        }
-    }
 
     gpio_config_t cfg = {};
     cfg.intr_type     = GPIO_INTR_DISABLE;
@@ -55,27 +48,8 @@ void ChargeStatus::Init(gpio_num_t detect_gpio, gpio_num_t full_gpio, int64_t no
 }
 
 void ChargeStatus::StartTick() {
-    if (tick_running_.exchange(true, std::memory_order_acq_rel))
-        return;
-    if (tick_exit_) {
-        while (xSemaphoreTake(tick_exit_, 0) == pdTRUE) {
-        }
-    }
-    BaseType_t ok =
-        xTaskCreatePinnedToCore(&ChargeStatus::TickTaskEntry, "charge_tick", 3 * 1024, this, 1, &tick_task_, 0);
-    if (ok != pdPASS) {
-        tick_running_.store(false, std::memory_order_release);
-        tick_task_ = nullptr;
+    if (xTaskCreatePinnedToCore(&ChargeStatus::TickTaskEntry, "charge_tick", 3 * 1024, this, 1, nullptr, 0) != pdPASS)
         ESP_LOGE(kTag, "task create failed name=charge_tick");
-    }
-}
-
-void ChargeStatus::StopTick() {
-    if (!tick_running_.exchange(false, std::memory_order_acq_rel))
-        return;
-    if (tick_exit_) {
-        xSemaphoreTake(tick_exit_, pdMS_TO_TICKS(1000));
-    }
 }
 
 void ChargeStatus::OnStateChanged(std::function<void(const Snapshot&)> cb) {
@@ -91,20 +65,14 @@ void ChargeStatus::TickTaskEntry(void* arg) {
 }
 
 void ChargeStatus::TickTaskLoop() {
-    // 有外部电源时 500 ms：去抖窗口(kStableHighMs=400/kAltWindowMs=1500)需要密集采样，
-    // 且此时不省电(充电中暂停睡眠)。纯电池(无外部电源)时只需察觉「USB 插入」这一个 LOW
-    // 沿，放慢到 2 s 让自动 light sleep 睡得更久；插入后下一拍即切回 500 ms 完成去抖。
+    // 有外部电源时 500 ms：去抖窗口(kStableHighMs=400/kAltWindowMs=1500)需要密集采样。
+    // 纯电池时只需察觉「USB 插入」，放慢到 2 s；插入后下一拍即切回 500 ms 完成去抖。
     constexpr TickType_t kPollPowered = pdMS_TO_TICKS(500);
     constexpr TickType_t kPollBattery = pdMS_TO_TICKS(2000);
-    while (tick_running_.load(std::memory_order_acquire)) {
+    while (true) {
         Tick(time_utils::NowMs());
-        const TickType_t poll = Get().power_present ? kPollPowered : kPollBattery;
-        vTaskDelay(poll);
+        vTaskDelay(Get().power_present ? kPollPowered : kPollBattery);
     }
-    tick_task_ = nullptr;
-    if (tick_exit_)
-        xSemaphoreGive(tick_exit_);
-    vTaskDelete(nullptr);
 }
 
 void ChargeStatus::Tick(int64_t now_ms) {

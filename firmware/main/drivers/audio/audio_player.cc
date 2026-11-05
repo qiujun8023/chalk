@@ -16,7 +16,7 @@
 
 namespace {
 constexpr char   kTag[]       = "audio";
-constexpr size_t kWriteChunk  = 512;  // 16 ms@16 kHz，stop 检查粒度
+constexpr size_t kWriteChunk  = 512;  // 每写这么多字节检查一次 stop；Opus 解码输出 48 kHz 单声道，约 5 ms
 constexpr size_t kMaxFileSize = 2 * 1024 * 1024;
 
 bool ReadFile(const std::string& path, std::vector<uint8_t>& out) {
@@ -145,6 +145,7 @@ uint32_t AudioPlayer::Play(const std::string& path) {
     std::vector<uint8_t> data;
     if (!ReadFile(path, data)) {
         ESP_LOGW(kTag, "read failed path=%s", path.c_str());
+        Stop();  // 和成功时一样打断上一段，不让旧声音接着念
         return 0;
     }
     xSemaphoreTake(mutex_, portMAX_DELAY);
@@ -345,7 +346,6 @@ void AudioPlayer::TaskLoop() {
         xSemaphoreGive(mutex_);
 
         playing_.store(true, std::memory_order_release);
-        current_token_.store(token, std::memory_order_release);
         const bool completed = Decode(data);
         playing_.store(false, std::memory_order_release);
         if (completed && on_done_)

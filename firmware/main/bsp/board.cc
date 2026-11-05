@@ -85,8 +85,7 @@ void Board::InitI2c() {
 }
 
 void Board::InitButtons() {
-    // 不启用 iot_button 的 power_save：它注册的 GPIO 唤醒 ISR 不在 IRAM，
-    // flash cache 关闭期间（LittleFS 写入）触发会崩溃。深睡唤醒由 power/sleep 单独配置。
+    // 深睡唤醒由 power/sleep 单独配置。
     up_btn_    = std::make_unique<Button>(UP_BUTTON_GPIO, false, kLongPressMs, 0);
     down_btn_  = std::make_unique<Button>(DOWN_BUTTON_GPIO, false, kLongPressMs, 0);
     enter_btn_ = std::make_unique<Button>(BOOT_BUTTON_GPIO, false, kLongPressMs, 0);

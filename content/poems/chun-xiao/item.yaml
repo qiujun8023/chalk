@@ -1,0 +1,14 @@
+type: story
+title: 春晓
+author: 孟浩然
+pages:
+  - image: p01.png
+    say: 春眠不觉晓。
+  - image: p02.png
+    say: 处处闻啼鸟。
+  - image: p03.png
+    say: 夜来风雨声。
+  - image: p04.png
+    say: 花落知多少。
+  - image: p05.png
+    say: 春眠不觉晓，处处闻啼鸟。夜来风雨声，花落知多少。

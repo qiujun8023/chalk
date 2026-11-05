@@ -38,11 +38,11 @@ type tts struct {
 }
 
 // 用 OpenAI 兼容的流式 chat/completions 接口合成（与 slate 相同，默认小米 MiMo、音色冰糖）。
-// 缓存命中时不需要 TTS_API_KEY。
+// key 取 TTS_API_KEY，没有时取 CHALK_TTS_API_KEY（~/.config/secrets/env 里的名字）；缓存命中时不需要。
 func newTTS(cacheDir string) *tts {
 	return &tts{
 		cacheDir: cacheDir,
-		apiKey:   os.Getenv("TTS_API_KEY"),
+		apiKey:   envOr("TTS_API_KEY", os.Getenv("CHALK_TTS_API_KEY")),
 		baseURL:  strings.TrimRight(envOr("TTS_BASE_URL", "https://api.xiaomimimo.com/v1"), "/"),
 		model:    envOr("TTS_MODEL", "mimo-v2.5-tts"),
 		voice:    envOr("TTS_VOICE", "冰糖"),
@@ -65,7 +65,7 @@ func (t *tts) speak(text string) (string, error) {
 		return "", err
 	}
 	if t.apiKey == "" {
-		return "", errors.New("缓存未命中，需要设置 TTS_API_KEY")
+		return "", errors.New("缓存未命中，需要设置 TTS_API_KEY 或 CHALK_TTS_API_KEY")
 	}
 	tmp := out + ".tmp.ogg"
 	if err := t.speakRemote(text, tmp); err != nil {
@@ -153,11 +153,9 @@ func volumeBeep(out string) error {
 	return encodeOpus([]string{"-f", "lavfi", "-i", "sine=frequency=1046:duration=0.18", "-af", "volume=0.6,afade=t=out:st=0.06:d=0.12"}, out)
 }
 
-func envOr(k, def string) string { return orDefault(os.Getenv(k), def) }
-
-func orDefault(v, def string) string {
-	if v == "" {
-		return def
+func envOr(k, def string) string {
+	if v := os.Getenv(k); v != "" {
+		return v
 	}
-	return v
+	return def
 }

@@ -15,7 +15,6 @@ constexpr int AUDIO_OUTPUT_SAMPLE_RATE = 16000;
 constexpr gpio_num_t AUDIO_I2S_GPIO_MCLK = GPIO_NUM_14;
 constexpr gpio_num_t AUDIO_I2S_GPIO_WS   = GPIO_NUM_38;
 constexpr gpio_num_t AUDIO_I2S_GPIO_BCLK = GPIO_NUM_15;
-constexpr gpio_num_t AUDIO_I2S_GPIO_DIN  = GPIO_NUM_16;
 constexpr gpio_num_t AUDIO_I2S_GPIO_DOUT = GPIO_NUM_45;
 
 constexpr gpio_num_t AUDIO_CODEC_PA_PIN      = GPIO_NUM_46;
@@ -45,7 +44,6 @@ constexpr gpio_num_t EPD_BUSY_PIN = GPIO_NUM_8;
 
 // ── 系统电源 ──────────────────────────────────────────────────
 constexpr gpio_num_t EPD_PWR_PIN           = GPIO_NUM_6;   // EPD 电源,EpdSsd1683 自管
-constexpr gpio_num_t AUDIO_PWR_PIN         = GPIO_NUM_42;  // AVDD_3V3 rail (I²C 上拉也在这条 rail)
-constexpr int        AUDIO_PWR_FORCE_LEVEL = 1;
+constexpr gpio_num_t AUDIO_PWR_PIN         = GPIO_NUM_42;       // AVDD_3V3 rail (I²C 上拉也在这条 rail)
 constexpr gpio_num_t VBAT_PWR_PIN          = GPIO_NUM_17;       // 系统软锁存,拉低 = 关机
-constexpr gpio_num_t POWER_KEY_GPIO        = DOWN_BUTTON_GPIO;  // SW1=下键开机,松开时 board_power 等其松开
+constexpr gpio_num_t POWER_KEY_GPIO        = DOWN_BUTTON_GPIO;  // SW1=下键开机,Board::InitPower 等其松开

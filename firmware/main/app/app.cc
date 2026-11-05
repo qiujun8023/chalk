@@ -1,13 +1,11 @@
 #include "app/app.h"
 
-#include <esp_app_desc.h>
 #include <esp_littlefs.h>
 #include <esp_log.h>
 #include <esp_system.h>
 
 #include <algorithm>
 #include <cstdio>
-#include <cstdlib>
 #include <cstring>
 
 #include "bsp/board.h"
@@ -16,29 +14,33 @@
 #include "ui/menu.h"
 #include "utils/time_utils.h"
 
+extern "C" const char kFirmwareVersion[];  // version.c，每次编译生成
+
 namespace {
 constexpr char kTag[]    = "app";
 constexpr char kRoot[]   = "/c";
 constexpr char kState[]  = "/c/state.json";
 constexpr char kScreen[] = "/c/screen.bin";  // 深睡前屏幕上的整帧，唤醒后交给驱动作为上一帧
 
-// 默认局刷；连续局刷到这个次数后，下一次切换画面时改用全刷清残影。
-constexpr int     kPartialBudget    = 8;
+// 默认局刷；连续局刷到这个次数后，下一次切换内容时改用全刷清残影。
+// 留出一次切换加一段动画（最多 4 帧）的余量，驱动的 16 次上限不会在动画中途强制全刷。列表移动只局刷。
+constexpr int     kPartialBudget    = EpdSsd1683::kMaxPartialBeforeFull - 4;
 constexpr int64_t kIdleSleepMs      = 3 * 60 * 1000;
-constexpr int64_t kMenuTimeoutMs    = 30 * 1000;  // 组列表 / 设置页无操作自动退出
+constexpr int64_t kMenuTimeoutMs    = 30 * 1000;  // 列表 / 设置页无操作自动退出
 constexpr int64_t kBatteryPollMs    = 60 * 1000;
 constexpr int     kAutoAdvanceMs    = 1500;  // 朗读结束到自动翻页的停顿
-constexpr int     kTitleGapMs       = 300;   // 切组时念完组名到开始播放的停顿
-constexpr int     kVolumeLevels     = 10;  // 音量 1–10 档，每档 10
+constexpr int     kTitleGapMs       = 300;   // 念完组名 / 标题到下一段朗读的停顿
+constexpr int     kVolumeMaxLevel   = 10;  // 音量 1–10 档，每档 10
 constexpr int     kVolumeMinLevel   = 1;
 
 // 设置页各行。
-enum SettingsRow { kRowBack, kRowVolume, kRowRefresh, kRowSleep, kRowReset, kSettingsRows };
+enum SettingsRow { kRowBack, kRowVolume, kSettingsRows };
 
-constexpr menu::Layout kListLayout{status_bar::kHeight + 4, EpdSsd1683::kHeight - 2, 30};
-constexpr menu::Layout kSettingsLayout{status_bar::kHeight + 4, status_bar::kHeight + 4 + kSettingsRows * 30, 30};
-constexpr int          kFooterTop  = kSettingsLayout.bottom + 10;
-constexpr int          kFooterLine = 24;
+// 列表和设置共用一种版式：一屏 7 行。设置页下方隔一道线列出三行只读的设备信息，贴近底部。
+constexpr menu::Layout kMenuLayout{status_bar::kHeight + 4, EpdSsd1683::kHeight - 2, 38};
+constexpr int          kInfoTop  = 200;
+constexpr int          kInfoRowH = 30;
+constexpr int          kInfoRule = kInfoTop - 16;
 
 std::string Abs(const std::string& rel) {
     return std::string(kRoot) + "/" + rel;
@@ -63,23 +65,21 @@ bool WriteFrame(const std::string& path, const uint8_t* data) {
     return ok;
 }
 
-// 编译日期 "Nov  4 2026" → "11-04"。
-std::string MonthDay(const char* date) {
-    static const char kMonths[] = "JanFebMarAprMayJunJulAugSepOctNovDec";
-    const char*       m         = strstr(kMonths, std::string(date, 3).c_str());
-    const int         month     = m ? static_cast<int>(m - kMonths) / 3 + 1 : 0;
-    char              buf[16];
-    snprintf(buf, sizeof(buf), "%02d-%02d", month, atoi(date + 4));
-    return buf;
-}
-
-// 可累加的按键：上下是一组（-1 / +1），确认单独一组（只在浏览内容时累加）；其他返回 0。
-int Axis(Ev ev, bool browse) {
-    return (ev == Ev::kUp || ev == Ev::kDown) ? 1 : (ev == Ev::kEnter && browse) ? 2 : 0;
+// 连按累加的只有上下（-1 / +1）。
+bool Stackable(Ev ev) {
+    return ev == Ev::kUp || ev == Ev::kDown;
 }
 
 int Sign(Ev ev) {
     return ev == Ev::kUp ? -1 : 1;
+}
+
+int Wrap(int i, int n) {
+    return (i % n + n) % n;
+}
+
+int VolumeLevel() {
+    return (AudioPlayer::Get().volume() + 5) / 10;
 }
 }  // namespace
 
@@ -106,6 +106,7 @@ void App::Run(power::WakeSource wake) {
     Restore(wake);
 
     while (true) {
+        input::SetImmediate(mode_ != Mode::kBrowse);
         int64_t wait_ms = 1000;
         if (auto_at_ms_ > 0)
             wait_ms = std::clamp<int64_t>(auto_at_ms_ - time_utils::NowMs(), 0, 1000);
@@ -129,8 +130,8 @@ void App::Run(power::WakeSource wake) {
     }
 }
 
-// 取下一个要处理的事件。播完、充电这类后台事件当场记下（安排自动翻页 / 标记状态栏待刷新），不占位；
-// 阻塞操作期间积压的按键只保留最后一个，连续的同类键累加步数，一次跳到目标、只刷一屏。
+// 取下一个要处理的事件。播完、充电这类后台事件当场记下（安排自动播放 / 标记状态栏待刷新），不占位；
+// 阻塞操作期间积压的按键只保留最后一个，连续的上下键累加步数，一次跳到目标、只刷一屏。
 bool App::WaitNext(Event& out, TickType_t timeout) {
     bool       have = false;
     Event      e{};
@@ -145,11 +146,9 @@ bool App::WaitNext(Event& out, TickType_t timeout) {
             charge_dirty_ = true;
             continue;
         }
-        const bool browse = mode_ == Mode::kBrowse;
-        const int  axis   = have ? Axis(out.ev, browse) : 0;
-        if (axis != 0 && axis == Axis(e.ev, browse)) {
+        if (have && Stackable(out.ev) && Stackable(e.ev)) {
             const int total = Sign(out.ev) * out.steps + Sign(e.ev) * e.steps;
-            out             = {axis == 2 ? Ev::kEnter : total < 0 ? Ev::kUp : Ev::kDown, 0, total < 0 ? -total : total};
+            out             = {total < 0 ? Ev::kUp : Ev::kDown, 0, total < 0 ? -total : total};
         } else {
             out = e;
         }
@@ -159,15 +158,15 @@ bool App::WaitNext(Event& out, TickType_t timeout) {
 }
 
 void App::Restore(power::WakeSource wake) {
-    positions_.assign(lib_.items.size(), 0);
-    const int groups = static_cast<int>(lib_.items.size());
-    group_           = (saved_.group >= 0 && saved_.group < groups) ? saved_.group : 0;
+    const int groups = static_cast<int>(lib_.groups.size());
+    positions_.assign(groups, 0);
+    group_ = (saved_.group >= 0 && saved_.group < groups) ? saved_.group : 0;
     for (int g = 0; g < groups && g < static_cast<int>(saved_.positions.size()); ++g) {
-        const library::Item& it = lib_.items[g];
-        const int n = static_cast<int>(it.type == library::Type::kStory ? it.pages.size() : it.vehicles.size());
+        const int n   = static_cast<int>(lib_.groups[g].entries.size());
         positions_[g] = saved_.positions[g] < n ? saved_.positions[g] : 0;
     }
-    uint16_t mv = 0;
+    page_ = IsStory() && saved_.page >= 0 && saved_.page < static_cast<int>(Current().pages.size()) ? saved_.page : 0;
+    uint16_t mv  = 0;
     uint8_t  pct = 0;
     if (Board::Get().ReadBattery(&mv, &pct))
         battery_pct_ = pct;
@@ -177,35 +176,36 @@ void App::Restore(power::WakeSource wake) {
     const bool seeded = wake != power::WakeSource::kColdBoot && ReadFrame(kScreen, frame_);
     if (seeded)
         epd_->Seed(frame_.data());
-    ESP_LOGI(kTag, "restore wake=%d group=%d pos=%d seeded=%d", static_cast<int>(wake), group_, Position(),
-             seeded ? 1 : 0);
+    ESP_LOGI(kTag, "restore wake=%d group=%d entry=%d page=%d seeded=%d", static_cast<int>(wake), group_,
+             positions_[group_], page_, seeded ? 1 : 0);
 
-    // 唤醒用的这次按键直接执行：确认是组内下一个，下键是下一组。
+    // 唤醒用的这次按键直接执行：确认是从头再播，下键是组内下一项。
     if (seeded && (wake == power::WakeSource::kEnter || wake == power::WakeSource::kDown)) {
         Handle({wake == power::WakeSource::kEnter ? Ev::kEnter : Ev::kDown, 0});
         return;
     }
-    ShowCurrent(/*speak=*/wake == power::WakeSource::kColdBoot);
-}
-
-int App::Count() const {
-    return Group().type == library::Type::kStory ? static_cast<int>(Group().pages.size())
-                                                  : static_cast<int>(Group().vehicles.size());
+    if (wake == power::WakeSource::kColdBoot)
+        StartEntry(/*with_group_title=*/true);
+    else
+        ShowPage(/*speak=*/false);
 }
 
 void App::Handle(const Event& e) {
     if (input::IsButton(e.ev)) {
         last_input_ms_ = time_utils::NowMs();
-        auto_at_ms_    = 0;  // 手动操作取消待执行的自动翻页
+        auto_at_ms_    = 0;  // 手动操作取消待执行的自动播放
+        if (e.steps == 0)
+            return;  // 连按相互抵消
     }
-    if (input::IsButton(e.ev) && e.steps == 0)
-        return;  // 连按相互抵消
     switch (e.ev) {
         case Ev::kSleep: SleepNow(); return;
         case Ev::kInfo:
-            ESP_LOGI(kTag, "info mode=%d group=%d pos=%d shown=%s volume=%d battery=%d partial_since_full=%d heap=%u",
-                     static_cast<int>(mode_), group_, Position(), shown_.c_str(), AudioPlayer::Get().volume(),
-                     battery_pct_, epd_->partial_since_full(), static_cast<unsigned>(esp_get_free_heap_size()));
+            ESP_LOGI(kTag,
+                     "info mode=%d group=%d entry=%d page=%d shown=%s volume=%d battery=%d partial_since_full=%d "
+                     "heap=%u",
+                     static_cast<int>(mode_), group_, positions_[group_], page_, shown_.c_str(),
+                     AudioPlayer::Get().volume(), battery_pct_, epd_->partial_since_full(),
+                     static_cast<unsigned>(esp_get_free_heap_size()));
             return;
         case Ev::kDump: {
             // 每行一行像素：FB:<行号>:<50 字节十六进制>，tools/devkeys.py --dump 还原成 PNG。
@@ -220,48 +220,67 @@ void App::Handle(const Event& e) {
             fflush(stdout);
             return;
         }
-
         default: break;
     }
-    switch (mode_) {
-        case Mode::kBrowse: HandleBrowse(e.ev, e.steps); break;
-        case Mode::kList: HandleList(e.ev, e.steps); break;
-        case Mode::kSettings: HandleSettings(e.ev, e.steps); break;
+    if (mode_ == Mode::kBrowse) {
+        HandleBrowse(e.ev, e.steps);
+        return;
     }
+    // 列表和设置页里长按就是一次短按。
+    const Ev ev = e.ev == Ev::kUpLong ? Ev::kUp : e.ev == Ev::kDownLong ? Ev::kDown : e.ev;
+    if (mode_ == Mode::kList)
+        HandleList(ev, e.steps);
+    else
+        HandleSettings(ev, e.steps);
 }
 
 void App::HandleBrowse(Ev ev, int steps) {
     switch (ev) {
-        case Ev::kUp: SwitchGroup(-steps); break;
-        case Ev::kDown: SwitchGroup(steps); break;
-        case Ev::kEnter: Step(steps); break;
+        case Ev::kUp: SwitchEntry(-steps); break;
+        case Ev::kDown: SwitchEntry(steps); break;
+        case Ev::kUpLong: SwitchGroup(-1); break;
+        case Ev::kDownLong: SwitchGroup(1); break;
+        case Ev::kEnter: StartEntry(/*with_group_title=*/false); break;
         case Ev::kList: EnterList(); break;
         case Ev::kSettings: EnterSettings(); break;
         default: break;
     }
 }
 
-// 组列表：第一行「返回」，之后每组一行。光标移到哪一组就念组名。
+// 列表：项层是当前组的各项，组层是各组；第一行「返回」，项层返回到组层，组层返回到内容。光标移动不朗读。
 void App::HandleList(Ev ev, int steps) {
-    const int n = static_cast<int>(lib_.items.size()) + 1;
+    const bool groups = list_level_ == ListLevel::kGroups;
     switch (ev) {
         case Ev::kUp:
-        case Ev::kDown: {
-            list_cursor_ = ((list_cursor_ + Sign(ev) * steps) % n + n) % n;
-            Play(list_cursor_ > 0 ? lib_.items[list_cursor_ - 1].title : "");
-            RenderMenu(NextMode());
+        case Ev::kDown:
+            list_cursor_ = Wrap(list_cursor_ + Sign(ev) * steps, ListRows());
+            RenderMenu();
             break;
-        }
         case Ev::kEnter:
-            if (list_cursor_ == 0)
+            if (groups && list_cursor_ == 0) {
                 ExitMenu(/*resume=*/true);
-            else
-                SelectGroup(list_cursor_ - 1);
+            } else if (groups) {
+                list_level_  = ListLevel::kEntries;
+                list_group_  = list_cursor_ - 1;
+                list_cursor_ = positions_[list_group_] + 1;
+                RenderMenu();
+            } else if (list_cursor_ == 0) {
+                list_level_  = ListLevel::kGroups;
+                list_cursor_ = list_group_ + 1;
+                RenderMenu();
+            } else {
+                SelectEntry(list_group_, list_cursor_ - 1);
+            }
             break;
         case Ev::kList: ExitMenu(/*resume=*/true); break;
         case Ev::kSettings: EnterSettings(); break;
         default: break;
     }
+}
+
+int App::ListRows() const {
+    return 1 + static_cast<int>(list_level_ == ListLevel::kGroups ? lib_.groups.size()
+                                                                  : lib_.groups[list_group_].entries.size());
 }
 
 // 设置页：上下移动光标，确认执行选中项；调音量时上下改值，再按确认结束。
@@ -273,9 +292,8 @@ void App::HandleSettings(Ev ev, int steps) {
                 ChangeVolume(-Sign(ev) * steps);  // 上调大，下调小
                 return;
             }
-            settings_cursor_ = ((settings_cursor_ + Sign(ev) * steps) % kSettingsRows + kSettingsRows) % kSettingsRows;
-            reset_armed_     = false;
-            RenderMenu(NextMode());
+            settings_cursor_ = Wrap(settings_cursor_ + Sign(ev) * steps, kSettingsRows);
+            RenderMenu();
             return;
         case Ev::kEnter: break;
         case Ev::kSettings: ExitMenu(/*resume=*/true); return;
@@ -285,93 +303,118 @@ void App::HandleSettings(Ev ev, int steps) {
         case kRowBack: ExitMenu(/*resume=*/true); break;
         case kRowVolume:
             editing_volume_ = !editing_volume_;
-            RenderMenu(NextMode());
-            break;
-        case kRowRefresh: RenderMenu(EpdSsd1683::Mode::kFull); break;
-        case kRowSleep: SleepNow(); break;
-        case kRowReset:
-            if (!reset_armed_) {
-                reset_armed_ = true;
-                RenderMenu(NextMode());
-            } else {
-                ResetProgress();
-            }
+            RenderMenu();
             break;
     }
 }
 
-void App::Step(int delta) {
-    ESP_LOGI(kTag, "step delta=%d group=%d pos=%d", delta, group_, Position());
-    const int n    = Count();
-    Position()     = ((Position() + delta) % n + n) % n;
-    action_cursor_ = 0;
-    ShowCurrent(true);
+void App::SwitchEntry(int delta) {
+    ESP_LOGI(kTag, "switch entry delta=%d group=%d from=%d", delta, group_, positions_[group_]);
+    positions_[group_] = Wrap(positions_[group_] + delta, static_cast<int>(Group().entries.size()));
+    StartEntry(/*with_group_title=*/false);
 }
 
+// 切组后播那一组记住的项。
 void App::SwitchGroup(int delta) {
     ESP_LOGI(kTag, "switch group delta=%d from=%d", delta, group_);
-    const int n = static_cast<int>(lib_.items.size());
-    SelectGroup(((group_ + delta) % n + n) % n);
+    group_ = Wrap(group_ + delta, static_cast<int>(lib_.groups.size()));
+    StartEntry(/*with_group_title=*/true);
 }
 
-// 切组从第一页开始：先念组名，念完再播第一页（故事接着自动翻页）。
-void App::SelectGroup(int group) {
-    mode_            = Mode::kBrowse;
-    group_           = group;
-    Position()       = 0;
-    action_cursor_   = 0;
-    narration_token_ = Play(Group().title);
-    title_playing_   = true;
-    ShowCurrent(false);
+void App::SelectEntry(int group, int entry) {
+    const bool changed = group != group_;
+    mode_              = Mode::kBrowse;
+    group_             = group;
+    positions_[group_] = entry;
+    StartEntry(/*with_group_title=*/changed);
 }
 
-// 朗读播完：组名念完就开始播当前页；故事页念完就安排自动翻页，最后一页停下。工程车不自动换车。
+// 开场（组名、故事标题）念完再念第一页；没有开场时直接朗读，车同时播动画。
+void App::StartEntry(bool with_group_title) {
+    Stop();
+    page_          = 0;
+    action_cursor_ = 0;
+    intro_.clear();
+    if (with_group_title)
+        intro_.push_back(Group().title_audio);
+    if (IsStory() && !Current().title_audio.empty())
+        intro_.push_back(Current().title_audio);
+    if (intro_.empty()) {
+        ShowPage(/*speak=*/true);
+        return;
+    }
+    stage_           = Stage::kIntro;
+    intro_next_      = 1;
+    narration_token_ = Play(intro_[0]);
+    ShowPage(/*speak=*/false);
+}
+
+// 先出声再刷屏，刷新的等待被朗读盖住；车在画面刷好后播动画。
+void App::ShowPage(bool speak) {
+    if (speak)
+        Narrate();
+    Render(IsStory() ? Current().pages[page_].img : Current().base, NextMode());
+    if (speak && !IsStory())
+        PlayAction();
+}
+
+void App::SpeakCurrent() {
+    Narrate();
+    if (!IsStory())
+        PlayAction();
+}
+
+void App::Narrate() {
+    stage_           = Stage::kPage;
+    narration_token_ = Play(IsStory() ? Current().pages[page_].audio : Current().intro);
+}
+
+// 朗读播完：开场念完一段接着念下一段，全部念完开始播当前页；故事页念完就安排翻页，最后一页停下。
 void App::OnAudioDone(uint32_t token) {
     if (mode_ != Mode::kBrowse || token == 0 || token != narration_token_)
         return;
-    if (title_playing_) {
-        title_playing_ = false;
-        auto_at_ms_    = time_utils::NowMs() + kTitleGapMs;
-        auto_speak_    = true;
+    if (stage_ == Stage::kIntro) {
+        Schedule(intro_next_ < intro_.size() ? Auto::kIntro : Auto::kSpeak, kTitleGapMs);
         return;
     }
-    if (Group().type == library::Type::kStory && Position() + 1 < Count()) {
-        auto_at_ms_ = time_utils::NowMs() + kAutoAdvanceMs;
-        auto_speak_ = false;
+    if (stage_ == Stage::kPage && IsStory() && page_ + 1 < static_cast<int>(Current().pages.size())) {
+        Schedule(Auto::kNextPage, kAutoAdvanceMs);
+        return;
     }
+    stage_ = Stage::kIdle;
+}
+
+void App::Schedule(Auto what, int delay_ms) {
+    auto_       = what;
+    auto_at_ms_ = time_utils::NowMs() + delay_ms;
 }
 
 void App::RunAuto() {
-    ESP_LOGI(kTag, "auto speak=%d group=%d pos=%d", auto_speak_ ? 1 : 0, group_, Position());
-    auto_at_ms_    = 0;
-    last_input_ms_ = time_utils::NowMs();  // 自动播放期间不进深睡
-    if (auto_speak_)
-        SpeakCurrent();
-    else
-        Step(1);
+    ESP_LOGI(kTag, "auto what=%d group=%d entry=%d page=%d", static_cast<int>(auto_), group_, positions_[group_],
+             page_);
+    const Auto what = auto_;
+    auto_           = Auto::kNone;
+    auto_at_ms_     = 0;
+    last_input_ms_  = time_utils::NowMs();  // 自动播放期间不进深睡
+    switch (what) {
+        case Auto::kIntro: narration_token_ = Play(intro_[intro_next_++]); break;
+        case Auto::kSpeak: SpeakCurrent(); break;
+        case Auto::kNextPage:
+            ++page_;
+            ShowPage(/*speak=*/true);
+            break;
+        case Auto::kNone: break;
+    }
 }
 
-// 先出声再刷屏：朗读立即开始，刷新的那一秒被声音盖住。工程车在刷完原图后播动画。
-void App::ShowCurrent(bool speak) {
-    title_playing_ = title_playing_ && !speak;
-    const bool story = Group().type == library::Type::kStory;
-    if (speak)
-        narration_token_ = Play(story ? Group().pages[Position()].audio : Group().vehicles[Position()].intro);
-    Render(story ? Group().pages[Position()].img : Group().vehicles[Position()].base, NextMode());
-    if (speak && !story)
-        PlayAction();
-}
-
-// 画面已经在屏上（切组念完组名后），只开始朗读和动画。
-void App::SpeakCurrent() {
-    const bool story = Group().type == library::Type::kStory;
-    narration_token_ = Play(story ? Group().pages[Position()].audio : Group().vehicles[Position()].intro);
-    if (!story)
-        PlayAction();
+void App::Stop() {
+    stage_      = Stage::kIdle;
+    auto_       = Auto::kNone;
+    auto_at_ms_ = 0;
 }
 
 void App::PlayAction() {
-    const library::Vehicle& v = Group().vehicles[Position()];
+    const library::Entry& v = Current();
     if (v.actions.empty())
         return;
     const library::Action& action = v.actions[action_cursor_ % v.actions.size()];
@@ -387,15 +430,12 @@ void App::PlayAction() {
             break;
     }
 
-    // 残影预算用完时，在动作结束后补一次全刷，不在动作中途打断；有按键在等就留给下一屏。
-    if (epd_->partial_since_full() >= kPartialBudget && !HasPendingButton())
-        Render(shown_, EpdSsd1683::Mode::kFull);
     ESP_LOGI(kTag, "action done vehicle=%s frames=%u interrupted=%d elapsed_ms=%lld", v.name.c_str(),
              static_cast<unsigned>(action.frames.size()), interrupted ? 1 : 0,
              static_cast<long long>(time_utils::NowMs() - start_ms));
 }
 
-// 队列里有需要打断动画的事件就返回 true。播完和充电事件不打断：前者安排自动翻页，后者等动画结束后刷新状态栏。
+// 队列里有需要打断动画的事件就返回 true。播完和充电事件不打断：前者安排自动播放，后者等动画结束后刷新状态栏。
 bool App::HasPendingButton() {
     Event e{};
     while (xQueuePeek(queue_, &e, 0) == pdTRUE) {
@@ -420,60 +460,43 @@ bool App::WaitButton(int ms) {
     return HasPendingButton();
 }
 
-// 进入组列表 / 设置页时停下朗读和自动播放；组列表先念当前组名。
+// 进入列表 / 设置页时停下朗读和自动播放。列表进入项层，光标停在当前项。
 void App::EnterList() {
-    mode_          = Mode::kList;
-    title_playing_ = false;
-    list_cursor_   = group_ + 1;
-    Play(Group().title);
-    RenderMenu(NextMode());
+    mode_        = Mode::kList;
+    list_level_  = ListLevel::kEntries;
+    list_group_  = group_;
+    list_cursor_ = positions_[group_] + 1;
+    Stop();
+    Play("");
+    RenderMenu();
 }
 
 void App::EnterSettings() {
     mode_            = Mode::kSettings;
-    title_playing_   = false;
     settings_cursor_ = kRowVolume;
     editing_volume_  = false;
-    reset_armed_     = false;
+    Stop();
     Play("");
-    RenderMenu(NextMode());
+    RenderMenu();
 }
 
 void App::ExitMenu(bool resume) {
     ESP_LOGI(kTag, "exit menu mode=%d resume=%d", static_cast<int>(mode_), resume ? 1 : 0);
     mode_           = Mode::kBrowse;
     editing_volume_ = false;
-    reset_armed_    = false;
+    Stop();
     if (!resume)
         Play("");
-    ShowCurrent(resume);
-}
-
-// 各组回到第一页，音量恢复默认，回到第一组。
-void App::ResetProgress() {
-    ESP_LOGI(kTag, "reset progress");
-    std::fill(positions_.begin(), positions_.end(), 0);
-    AudioPlayer::Get().SetVolume(SavedState{}.volume);
-    saved_.volume = AudioPlayer::Get().volume();
-    saved_.group  = 0;
-    saved_.positions.assign(positions_.begin(), positions_.end());
-    saved_.Save(kState);
-    editing_volume_ = false;
-    reset_armed_    = false;
-    SelectGroup(0);
+    ShowPage(resume);
 }
 
 void App::ChangeVolume(int delta) {
-    int level = (AudioPlayer::Get().volume() + 5) / 10 + delta;
-    if (level < kVolumeMinLevel)
-        level = kVolumeMinLevel;
-    if (level > kVolumeLevels)
-        level = kVolumeLevels;
+    const int level = std::clamp(VolumeLevel() + delta, kVolumeMinLevel, kVolumeMaxLevel);
     AudioPlayer::Get().SetVolume(level * 10);
     ESP_LOGI(kTag, "volume level=%d", level);
     if (!lib_.volume_sound.empty())
         Play(lib_.volume_sound);
-    RenderMenu(NextMode());
+    RenderMenu();
 }
 
 // 定期读电量；状态栏（设置页还有底部的电量信息）有变化时局刷一次。
@@ -504,16 +527,15 @@ StatusBarState App::CurrentBar() const {
     // 电量按 10% 取整，避免 ADC 抖动导致频繁局刷。
     if (s.battery_pct >= 0)
         s.battery_pct = (s.battery_pct + 5) / 10 * 10;
-    const int pos = positions_[group_];
     if (mode_ == Mode::kList) {
-        s.caption = "目录";
+        s.caption = list_level_ == ListLevel::kGroups ? "目录" : lib_.groups[list_group_].name;
         if (list_cursor_ > 0)
-            s.progress = std::to_string(list_cursor_) + "/" + std::to_string(lib_.items.size());
+            s.progress = std::to_string(list_cursor_) + "/" + std::to_string(ListRows() - 1);
     } else if (mode_ == Mode::kSettings) {
         s.caption = "设置";
     } else {
-        s.progress = std::to_string(pos + 1) + "/" + std::to_string(Count());
-        s.caption  = Group().type == library::Type::kStory ? Group().name : Group().vehicles[pos].name;
+        s.progress = std::to_string(positions_[group_] + 1) + "/" + std::to_string(Group().entries.size());
+        s.caption  = Current().name;
     }
     return s;
 }
@@ -522,37 +544,38 @@ EpdSsd1683::Mode App::NextMode() const {
     return epd_->partial_since_full() >= kPartialBudget ? EpdSsd1683::Mode::kFull : EpdSsd1683::Mode::kPartial;
 }
 
-bool App::Render(const std::string& img, EpdSsd1683::Mode mode) {
+void App::Render(const std::string& img, EpdSsd1683::Mode mode) {
     if (!ReadFrame(Abs(img), frame_)) {
         ESP_LOGW(kTag, "image missing path=%s", img.c_str());
-        return false;
+        return;
     }
     bar_ = CurrentBar();
     status_bar::Draw(frame_.data(), bar_, fonts_);
     epd_->Show(frame_.data(), mode);
     shown_ = img;
-    return true;
 }
 
 void App::RenderMenu(EpdSsd1683::Mode mode, bool only_if_changed) {
     frame_.assign(EpdSsd1683::kBufferLen, 0xFF);
     std::vector<menu::Row> rows;
     if (mode_ == Mode::kList) {
-        rows.push_back({"返回"});
-        for (const library::Item& it : lib_.items)
-            rows.push_back({it.name});
-        menu::DrawList(frame_.data(), fonts_.title, rows, list_cursor_, kListLayout);
+        rows.push_back(menu::Row::Back());
+        if (list_level_ == ListLevel::kGroups) {
+            for (const library::Group& g : lib_.groups)
+                rows.push_back({g.name});
+        } else {
+            for (const library::Entry& e : lib_.groups[list_group_].entries)
+                rows.push_back({e.name});
+        }
+        menu::DrawList(frame_.data(), fonts_.title, rows, list_cursor_, kMenuLayout);
     } else {
-        const int level = (AudioPlayer::Get().volume() + 5) / 10;
-        rows            = {
-            {"返回"},
-            {"音量", std::to_string(level), editing_volume_},
-            {"刷新屏幕"},
-            {"立即休眠"},
-            {reset_armed_ ? "再按确认重置" : "重置进度"},
+        rows = {
+            menu::Row::Back(),
+            {"音量", std::to_string(VolumeLevel()), editing_volume_},
         };
-        menu::DrawList(frame_.data(), fonts_.title, rows, settings_cursor_, kSettingsLayout);
-        DrawSettingsFooter(frame_.data());
+        menu::DrawList(frame_.data(), fonts_.title, rows, settings_cursor_, kMenuLayout);
+        menu::DrawRule(frame_.data(), kInfoRule);
+        menu::DrawPairs(frame_.data(), fonts_.title, InfoRows(), kInfoTop, kInfoRowH);
     }
     bar_ = CurrentBar();
     status_bar::Draw(frame_.data(), bar_, fonts_);
@@ -561,31 +584,28 @@ void App::RenderMenu(EpdSsd1683::Mode mode, bool only_if_changed) {
     epd_->Show(frame_.data(), mode);
 }
 
-// 设置页底部的只读信息：电量、存储、内容和固件的构建时间。
-void App::DrawSettingsFooter(uint8_t* fb) {
-    menu::DrawRule(fb, kFooterTop - 6);
-    uint16_t   mv = 0;
+// 设置页下方的只读信息：电池（电量或充电状态，加电压）、存储用量、固件版本。
+std::vector<std::pair<std::string, std::string>> App::InfoRows() const {
+    uint16_t   mv  = 0;
     uint8_t    pct = 0;
-    const bool ok = Board::Get().ReadBattery(&mv, &pct);
-    mv            = mv / 50 * 50;  // 只显示到 0.05V，避免 ADC 抖动导致频繁局刷
-    const auto  charge = Board::Get().charge()->Get();
-    const char* state  = charge.full ? "已充满" : charge.charging ? "充电中" : "电池供电";
-    char        line[64];
-    if (ok)
-        snprintf(line, sizeof(line), "电量 %d%%  %d.%02dV  %s", (pct + 5) / 10 * 10, mv / 1000, mv % 1000 / 10, state);
+    const bool ok  = Board::Get().ReadBattery(&mv, &pct);
+    mv             = mv / 50 * 50;  // 只显示到 0.05V，避免 ADC 抖动导致频繁局刷
+    const auto charge = Board::Get().charge()->Get();
+    char       buf[32];
+    // 充电时电压被充电 IC 拉高、百分比不可信，换成充电状态（与状态栏一致）。
+    if (!ok)
+        snprintf(buf, sizeof(buf), "--");
+    else if (charge.full || charge.charging)
+        snprintf(buf, sizeof(buf), "%s  %d.%02dV", charge.full ? "已充满" : "充电中", mv / 1000, mv % 1000 / 10);
     else
-        snprintf(line, sizeof(line), "电量 --  %s", state);
-    const int x = 28;
-    fonts_.title.Draw(fb, x, kFooterTop, line);
-
+        snprintf(buf, sizeof(buf), "%d%%  %d.%02dV", (pct + 5) / 10 * 10, mv / 1000, mv % 1000 / 10);
+    std::vector<std::pair<std::string, std::string>> rows{{"电池", buf}};
     size_t total = 0, used = 0;
     esp_littlefs_info("storage", &total, &used);
-    snprintf(line, sizeof(line), "存储 %.1f/%.1fMB", used / 1048576.0, total / 1048576.0);
-    fonts_.title.Draw(fb, x, kFooterTop + kFooterLine, line);
-
-    const esp_app_desc_t* app = esp_app_get_description();
-    snprintf(line, sizeof(line), "内容 %s  固件 %s %.5s", lib_.built.c_str(), MonthDay(app->date).c_str(), app->time);
-    fonts_.title.Draw(fb, x, kFooterTop + kFooterLine * 2, line);
+    snprintf(buf, sizeof(buf), "已用 %.1f / %.1f MB", used / 1048576.0, total / 1048576.0);
+    rows.push_back({"存储", buf});
+    rows.push_back({"版本", kFirmwareVersion});
+    return rows;
 }
 
 uint32_t App::Play(const std::string& audio) {
@@ -596,7 +616,7 @@ uint32_t App::Play(const std::string& audio) {
     return AudioPlayer::Get().Play(Abs(audio));
 }
 
-// 屏幕上保留的是内容页：在组列表 / 设置页时先切回内容再睡。
+// 屏幕上保留的是内容页：在列表 / 设置页时先切回内容再睡。
 void App::SleepNow() {
     AudioPlayer::Get().Stop();
     if (mode_ != Mode::kBrowse)
@@ -604,6 +624,7 @@ void App::SleepNow() {
     vTaskDelay(pdMS_TO_TICKS(50));
     saved_.volume = AudioPlayer::Get().volume();
     saved_.group  = group_;
+    saved_.page   = page_;
     saved_.positions.assign(positions_.begin(), positions_.end());
     saved_.Save(kState);
     WriteFrame(kScreen, epd_->current());

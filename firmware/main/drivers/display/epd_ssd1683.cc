@@ -13,9 +13,6 @@
 
 namespace {
 constexpr char kTag[] = "epd";
-
-// 两次刷新之间至少间隔这么久，防止过频刷新损伤面板。
-constexpr int64_t kMinRefreshGapMs = 300;
 }  // namespace
 
 EpdSsd1683::EpdSsd1683() {
@@ -29,7 +26,7 @@ EpdSsd1683::EpdSsd1683() {
 }
 
 void EpdSsd1683::Init() {
-    SpiPortInit();
+    SpiPortInit(/*rx=*/false);
     SpiGpioInit();
     // 初始化阶段不刷屏：面板断电后保留画面，由上层决定首帧。
     EpdPowerOff();
@@ -54,10 +51,6 @@ EpdSsd1683::Mode EpdSsd1683::Show(const uint8_t* frame, Mode mode) {
     if (mode == Mode::kPartial && (!synced_ || partial_since_full_ >= kMaxPartialBeforeFull))
         mode = Mode::kFull;
 
-    const int64_t gap = time_utils::NowMs() - last_refresh_end_ms_;
-    if (gap < kMinRefreshGapMs)
-        vTaskDelay(pdMS_TO_TICKS(kMinRefreshGapMs - gap));
-
     memcpy(snapshot_, frame, kBufferLen);
     const int64_t start_ms = time_utils::NowMs();
     // 每次刷新都先硬复位：否则上一轮全刷留下的 LUT 会让局刷变成闪烁的全刷。
@@ -70,9 +63,8 @@ EpdSsd1683::Mode EpdSsd1683::Show(const uint8_t* frame, Mode mode) {
         partial_since_full_++;
     }
     memcpy(prev_snapshot_, snapshot_, kBufferLen);
-    synced_              = true;
-    last_refresh_end_ms_ = time_utils::NowMs();
+    synced_ = true;
     ESP_LOGI(kTag, "refresh mode=%s elapsed_ms=%lld partial_since_full=%d", mode == Mode::kFull ? "full" : "partial",
-             static_cast<long long>(last_refresh_end_ms_ - start_ms), partial_since_full_);
+             static_cast<long long>(time_utils::NowMs() - start_ms), partial_since_full_);
     return mode;
 }

@@ -30,6 +30,8 @@ bool SavedState::Load(const std::string& path) {
         volume = v->valueint;
     if (cJSON_IsNumber(v = cJSON_GetObjectItem(doc.get(), "group")))
         group = v->valueint;
+    if (cJSON_IsNumber(v = cJSON_GetObjectItem(doc.get(), "page")))
+        page = v->valueint;
     positions.clear();
     cJSON_ArrayForEach(v, cJSON_GetObjectItem(doc.get(), "positions")) {
         positions.push_back(cJSON_IsNumber(v) ? static_cast<uint16_t>(v->valueint) : 0);
@@ -41,6 +43,7 @@ bool SavedState::Save(const std::string& path) const {
     std::unique_ptr<cJSON, decltype(&cJSON_Delete)> doc(cJSON_CreateObject(), cJSON_Delete);
     cJSON_AddNumberToObject(doc.get(), "volume", volume);
     cJSON_AddNumberToObject(doc.get(), "group", group);
+    cJSON_AddNumberToObject(doc.get(), "page", page);
     cJSON* arr = cJSON_AddArrayToObject(doc.get(), "positions");
     for (uint16_t p : positions)
         cJSON_AddItemToArray(arr, cJSON_CreateNumber(p));

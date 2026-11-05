@@ -1,0 +1,21 @@
+type: story
+title: 小猪睡不着
+pages:
+  - image: p01.png
+    say: 天黑了，小猪躺在床上，眼睛睁得大大的：我一点也不困！
+  - image: p02.png
+    say: 小猪悄悄下了床：大家都睡着了吗？我去看看。
+  - image: p03.png
+    say: 小鸡睡在鸡窝里，小翅膀盖着小脑袋。
+  - image: p04.png
+    say: 小狗睡在狗窝里，呼噜，呼噜。
+  - image: p05.png
+    say: 小鱼睡在池塘里，吐出一个小泡泡。
+  - image: p06.png
+    say: 树上有一双圆眼睛！咕咕，咕咕——是猫头鹰。
+  - image: p07.png
+    say: 猫头鹰说：我晚上才上班呢。小猪，快回去睡觉吧！
+  - image: p08.png
+    say: 小猪跑回家，钻进妈妈怀里，打了个大大的哈欠。
+  - image: p09.png
+    say: 嘘——小猪睡着啦。晚安。

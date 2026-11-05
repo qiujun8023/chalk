@@ -47,19 +47,18 @@ class EpdSsd1683 {
     uint8_t*             prev_snapshot_ = nullptr;  // 屏幕上当前的帧
     bool                 synced_        = false;
     int                  partial_since_full_ = 0;
-    int64_t              last_refresh_end_ms_ = 0;
     std::vector<uint8_t> epd_line_;
 
-    void    SpiPortInit();
-    void    SpiPortRxInit();
+    int64_t last_temp_read_ms_ = 0;
+    uint8_t cached_booster_    = 0;
+
+    void    SpiPortInit(bool rx);
     void    SpiGpioInit();
     void    EpdInit();
     void    EpdDisplayFull();
     void    EpdDisplayPartial();
     void    EpdTurnOnDisplay();
     void    ApplyTemperatureBoost();
-    int64_t last_temp_read_ms_ = 0;
-    uint8_t cached_booster_    = 0;
     void    EpdSendCommand(uint8_t c);
     void    EpdSendData(uint8_t d);
     uint8_t EpdRecvData();

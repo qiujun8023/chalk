@@ -1,0 +1,14 @@
+type: story
+title: 所见
+author: 袁枚
+pages:
+  - image: p01.png
+    say: 牧童骑黄牛。
+  - image: p02.png
+    say: 歌声振林樾。
+  - image: p03.png
+    say: 意欲捕鸣蝉。
+  - image: p04.png
+    say: 忽然闭口立。
+  - image: p05.png
+    say: 牧童骑黄牛，歌声振林樾。意欲捕鸣蝉，忽然闭口立。

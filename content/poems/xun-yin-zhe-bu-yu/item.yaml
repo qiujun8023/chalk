@@ -1,0 +1,14 @@
+type: story
+title: 寻隐者不遇
+author: 贾岛
+pages:
+  - image: p01.png
+    say: 松下问童子。
+  - image: p02.png
+    say: 言师采药去。
+  - image: p03.png
+    say: 只在此山中。
+  - image: p04.png
+    say: 云深不知处。
+  - image: p05.png
+    say: 松下问童子，言师采药去。只在此山中，云深不知处。

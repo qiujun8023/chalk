@@ -9,9 +9,9 @@
 // 底部一条分隔线。slate 左侧是 WiFi，这里不联网，换成进度。
 struct StatusBarState {
     std::string progress;  // 如 "3/12"
-    std::string caption;   // 如 "挖掘机"、"音量 7"
-    int         battery_pct = -1;  // -1 = 未知
-    bool        charging    = false;
+    std::string caption;   // 如 "挖掘机"、"目录"、"设置"
+    int         battery_pct = -1;     // -1 = 未知
+    bool        charging    = false;  // 充电中且未充满
     bool        full        = false;
 
     bool operator==(const StatusBarState&) const = default;

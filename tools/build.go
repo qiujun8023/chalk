@@ -6,43 +6,41 @@ import (
 	"image"
 	"image/color"
 	"image/gif"
-	"io"
 	"os"
 	"os/exec"
 	"path"
 	"path/filepath"
 	"strings"
-	"time"
 )
 
 // 以下结构与固件 app/library.cc 解析的 library.json 一一对应。
 type libraryOut struct {
-	VolumeSound string    `json:"volumeSound"`
-	Font16      string    `json:"font16"`
-	Font12      string    `json:"font12"`
-	Built       string    `json:"built"` // 构建时间，设置页显示
-	Items       []itemOut `json:"items"`
+	VolumeSound string     `json:"volumeSound"`
+	Font16      string     `json:"font16"`
+	Font12      string     `json:"font12"`
+	Groups      []groupOut `json:"groups"`
 }
 
-type itemOut struct {
-	Type     string       `json:"type"`
-	ID       string       `json:"id"`
-	Name     string       `json:"name"`  // 状态栏标题
-	Title    string       `json:"title"` // 标题朗读
-	Pages    []pageOut    `json:"pages,omitempty"`
-	Vehicles []vehicleOut `json:"vehicles,omitempty"`
+type groupOut struct {
+	Name       string     `json:"name"`       // 列表行、状态栏标题
+	TitleAudio string     `json:"titleAudio"` // 组名朗读
+	Entries    []entryOut `json:"entries"`
+}
+
+// 组里的一项：type 为 story（故事、古诗）或 vehicle。
+type entryOut struct {
+	Type       string      `json:"type"`
+	Name       string      `json:"name"`
+	TitleAudio string      `json:"titleAudio,omitempty"` // story：标题朗读
+	Pages      []pageOut   `json:"pages,omitempty"`
+	Base       string      `json:"base,omitempty"`
+	Intro      string      `json:"intro,omitempty"`
+	Actions    []actionOut `json:"actions,omitempty"`
 }
 
 type pageOut struct {
 	Img   string `json:"img"`
 	Audio string `json:"audio"`
-}
-
-type vehicleOut struct {
-	Name    string      `json:"name"`
-	Base    string      `json:"base"`
-	Intro   string      `json:"intro"`
-	Actions []actionOut `json:"actions"`
 }
 
 type actionOut struct {
@@ -62,7 +60,7 @@ var artBox = image.Rect(8, statusBarHeight+6, 392, 294)
 // 状态栏 12px 字库只用于数字（进度、电量）；16px 字库收录标题和固件里写死的界面文字（组列表、设置页）。
 const (
 	digitChars  = "0123456789/%-"
-	fixedLabels = "音量 返回目录设置刷新屏幕立即休眠重置进度再按确认电量电池供电充电中已充满存储内容固件MBV.:" + digitChars
+	fixedLabels = "音量 返回目录设置电池充电中已充满存储已用版本MBV.+abcdef" + digitChars
 )
 
 // 预览 GIF 里每次局刷按这个耗时估算，接近实机。
@@ -107,12 +105,7 @@ func (b *builder) writeSpeech(rel, text string) error {
 }
 
 func (b *builder) copyFile(rel, src string) error {
-	in, err := os.Open(src)
-	if err != nil {
-		return err
-	}
-	defer in.Close()
-	data, err := io.ReadAll(in)
+	data, err := os.ReadFile(src)
 	if err != nil {
 		return err
 	}
@@ -129,8 +122,7 @@ func (b *builder) build() error {
 			return err
 		}
 	}
-	out := libraryOut{VolumeSound: "ui/volume.ogg", Font16: "ui/font16.bin", Font12: "ui/font12.bin",
-		Built: time.Now().Format("01-02 15:04")}
+	out := libraryOut{VolumeSound: "ui/volume.ogg", Font16: "ui/font16.bin", Font12: "ui/font12.bin"}
 	beep := filepath.Join(b.tts.cacheDir, "volume.ogg")
 	if _, err := os.Stat(beep); err != nil {
 		if err := os.MkdirAll(b.tts.cacheDir, 0o755); err != nil {
@@ -143,23 +135,30 @@ func (b *builder) build() error {
 	if err := b.copyFile(out.VolumeSound, beep); err != nil {
 		return err
 	}
-	for _, name := range lib.Items {
-		it, err := loadItem(b.content, name)
-		if err != nil {
+	captions := fixedLabels
+	for gi, g := range lib.Groups {
+		o := groupOut{Name: g.Title, TitleAudio: fmt.Sprintf("groups/%d.ogg", gi+1)}
+		if err := b.writeSpeech(o.TitleAudio, g.Title); err != nil {
 			return err
 		}
-		o, err := b.buildItem(name, it)
-		if err != nil {
-			return fmt.Errorf("%s: %w", name, err)
+		for _, name := range g.Items {
+			entries, err := b.buildItem(name)
+			if err != nil {
+				return fmt.Errorf("%s: %w", name, err)
+			}
+			o.Entries = append(o.Entries, entries...)
 		}
-		out.Items = append(out.Items, *o)
+		if len(o.Entries) == 0 {
+			return fmt.Errorf("组 %s 为空", g.Title)
+		}
+		captions += o.Name
+		for _, e := range o.Entries {
+			captions += e.Name
+		}
+		out.Groups = append(out.Groups, o)
 	}
-	captions := fixedLabels
-	for _, it := range out.Items {
-		captions += it.Name
-		for _, v := range it.Vehicles {
-			captions += v.Name
-		}
+	if len(out.Groups) == 0 {
+		return fmt.Errorf("library.yaml 没有组")
 	}
 	for _, f := range []struct {
 		rel, src, chars string
@@ -186,32 +185,40 @@ func (b *builder) build() error {
 	return nil
 }
 
-func (b *builder) buildItem(name string, it *itemSrc) (*itemOut, error) {
-	dir := filepath.Join(b.content, name)
-	o := &itemOut{Type: it.Type, ID: name, Name: it.Title, Title: name + "/title.ogg"}
-	if err := b.writeSpeech(o.Title, it.Title); err != nil {
+// buildItem 编译 content/<name>：故事是一项，车辆合集展开成每辆车一项。
+func (b *builder) buildItem(name string) ([]entryOut, error) {
+	it, err := loadItem(b.content, name)
+	if err != nil {
 		return nil, err
 	}
-
-	switch it.Type {
-	case "story":
-		for i, p := range it.Pages {
-			po, err := b.buildPage(name, dir, i, p)
-			if err != nil {
-				return nil, fmt.Errorf("第 %d 页: %w", i+1, err)
-			}
-			o.Pages = append(o.Pages, *po)
-		}
-	case "vehicles":
+	dir := filepath.Join(b.content, name)
+	if it.Type == "vehicles" {
+		var out []entryOut
 		for _, v := range it.Vehicles {
-			vo, err := b.buildVehicle(name, dir, v)
+			e, err := b.buildVehicle(name, dir, v)
 			if err != nil {
 				return nil, fmt.Errorf("%s: %w", v.ID, err)
 			}
-			o.Vehicles = append(o.Vehicles, *vo)
+			out = append(out, *e)
 		}
+		return out, nil
 	}
-	return o, nil
+	e := entryOut{Type: "story", Name: it.Title, TitleAudio: name + "/title.ogg"}
+	spoken := it.Title
+	if it.Author != "" {
+		spoken += "，" + it.Author
+	}
+	if err := b.writeSpeech(e.TitleAudio, spoken); err != nil {
+		return nil, err
+	}
+	for i, p := range it.Pages {
+		po, err := b.buildPage(name, dir, i, p)
+		if err != nil {
+			return nil, fmt.Errorf("第 %d 页: %w", i+1, err)
+		}
+		e.Pages = append(e.Pages, *po)
+	}
+	return []entryOut{e}, nil
 }
 
 func (b *builder) buildPage(name, dir string, i int, p pageSrc) (*pageOut, error) {
@@ -231,7 +238,7 @@ func (b *builder) buildPage(name, dir string, i int, p pageSrc) (*pageOut, error
 	return &pageOut{Img: stem + ".img", Audio: stem + ".ogg"}, nil
 }
 
-func (b *builder) buildVehicle(name, dir string, v vehicleSrc) (*vehicleOut, error) {
+func (b *builder) buildVehicle(name, dir string, v vehicleSrc) (*entryOut, error) {
 	vdir := filepath.Join(dir, v.ID)
 	prefix := path.Join(name, v.ID)
 	base, err := loadGray(filepath.Join(vdir, "base.png"))
@@ -268,7 +275,7 @@ func (b *builder) buildVehicle(name, dir string, v vehicleSrc) (*vehicleOut, err
 		return c.frame()
 	}
 	baseFrame := render(base)
-	vo := &vehicleOut{Name: v.Name, Base: prefix + "/base.img", Intro: prefix + "/intro.ogg"}
+	vo := &entryOut{Type: "vehicle", Name: v.Name, Base: prefix + "/base.img", Intro: prefix + "/intro.ogg"}
 	if err := b.writeFrame(vo.Base, baseFrame); err != nil {
 		return nil, err
 	}

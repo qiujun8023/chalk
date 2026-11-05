@@ -19,15 +19,6 @@ vehicles:
           - {image: k1.png, region: [24, 528, 360, 384], ms: 400}
           - {image: k2.png, region: [0, 0, 620, 980], ms: 400}
           - {image: base.png}
-  - id: cement-mixer
-    name: 水泥车
-    intro: 水泥车，转一转。咕噜噜！
-    actions:
-      - frames:
-          - {image: k1.png, region: [540, 100, 880, 560], ms: 200}
-          - {image: k2.png, region: [540, 100, 880, 560], ms: 200}
-          - {image: k1.png, region: [540, 100, 880, 560], ms: 200}
-          - {image: k2.png, region: [540, 100, 880, 560]}
   - id: dump-truck
     name: 翻斗车
     intro: 翻斗车，倒泥土。哗啦！
@@ -37,6 +28,15 @@ vehicles:
           - {image: base.png, ms: 200}
           - {image: k2.png, region: [560, 0, 888, 1086], ms: 800}
           - {image: base.png}
+  - id: cement-mixer
+    name: 水泥车
+    intro: 水泥车，转一转。咕噜噜！
+    actions:
+      - frames:
+          - {image: k1.png, region: [540, 100, 880, 560], ms: 200}
+          - {image: k2.png, region: [540, 100, 880, 560], ms: 200}
+          - {image: k1.png, region: [540, 100, 880, 560], ms: 200}
+          - {image: k2.png, region: [540, 100, 880, 560]}
   - id: crane
     name: 吊车
     intro: 吊车吊得高。吱呀——！
@@ -44,32 +44,6 @@ vehicles:
       - frames:
           - {image: k1.png, region: [40, 40, 150, 1046], ms: 400}
           - {image: k2.png, region: [0, 120, 330, 540], ms: 800}
-          - {image: base.png}
-  - id: police-car
-    name: 警车
-    intro: 警察警察，让一让！呜哇呜哇！
-    actions:
-      - frames:
-          - {image: k1.png, region: [552, 120, 480, 192], ms: 200}
-          - {image: k2.png, region: [552, 72, 480, 240], ms: 200}
-          - {image: k1.png, region: [552, 120, 480, 192], ms: 200}
-          - {image: base.png}
-  - id: ambulance
-    name: 救护车
-    intro: 救护车，去医院。嘀嘟嘀嘟！
-    actions:
-      - frames:
-          - {image: k1.png, region: [312, 72, 576, 288], ms: 300}
-          - {image: base.png, ms: 300}
-          - {image: k1.png, region: [312, 72, 576, 288], ms: 300}
-          - {image: base.png}
-  - id: fire-truck
-    name: 消防车
-    intro: 消防车救火啦！呜——！
-    actions:
-      - frames:
-          - {image: k1.png, region: [0, 0, 336, 192], ms: 400}
-          - {image: k2.png, region: [0, 0, 336, 528], ms: 800}
           - {image: base.png}
   - id: sprinkler-truck
     name: 洒水车
@@ -87,6 +61,32 @@ vehicles:
       - frames:
           - {image: k1.png, region: [1032, 24, 416, 840], ms: 400}
           - {image: k2.png, region: [980, 0, 468, 900], ms: 800}
+          - {image: base.png}
+  - id: fire-truck
+    name: 消防车
+    intro: 消防车救火啦！呜——！
+    actions:
+      - frames:
+          - {image: k1.png, region: [0, 0, 336, 192], ms: 400}
+          - {image: k2.png, region: [0, 0, 336, 528], ms: 800}
+          - {image: base.png}
+  - id: ambulance
+    name: 救护车
+    intro: 救护车，去医院。嘀嘟嘀嘟！
+    actions:
+      - frames:
+          - {image: k1.png, region: [312, 72, 576, 288], ms: 300}
+          - {image: base.png, ms: 300}
+          - {image: k1.png, region: [312, 72, 576, 288], ms: 300}
+          - {image: base.png}
+  - id: police-car
+    name: 警车
+    intro: 警察警察，让一让！呜哇呜哇！
+    actions:
+      - frames:
+          - {image: k1.png, region: [552, 120, 480, 192], ms: 200}
+          - {image: k2.png, region: [552, 72, 480, 240], ms: 200}
+          - {image: k1.png, region: [552, 120, 480, 192], ms: 200}
           - {image: base.png}
   - id: bus
     name: 巴士
