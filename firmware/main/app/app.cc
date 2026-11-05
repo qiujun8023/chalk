@@ -36,7 +36,7 @@ constexpr int     kVolumeMinLevel   = 1;
 // 设置页各行。
 enum SettingsRow { kRowBack, kRowVolume, kSettingsRows };
 
-// 列表和设置共用一种版式：一屏 7 行。设置页下方隔一道线列出三行只读的设备信息，贴近底部。
+// 列表和设置共用一种版式：一屏 7 行，放不下时逐行滚动。设置页下方隔一道线列出三行只读的设备信息，贴近底部。
 constexpr menu::Layout kMenuLayout{status_bar::kHeight + 4, EpdSsd1683::kHeight - 2, 38};
 constexpr int          kInfoTop  = 200;
 constexpr int          kInfoRowH = 30;
@@ -263,10 +263,12 @@ void App::HandleList(Ev ev, int steps) {
                 list_level_  = ListLevel::kEntries;
                 list_group_  = list_cursor_ - 1;
                 list_cursor_ = positions_[list_group_] + 1;
+                list_top_    = 0;
                 RenderMenu();
             } else if (list_cursor_ == 0) {
                 list_level_  = ListLevel::kGroups;
                 list_cursor_ = list_group_ + 1;
+                list_top_    = 0;
                 RenderMenu();
             } else {
                 SelectEntry(list_group_, list_cursor_ - 1);
@@ -466,6 +468,7 @@ void App::EnterList() {
     list_level_  = ListLevel::kEntries;
     list_group_  = group_;
     list_cursor_ = positions_[group_] + 1;
+    list_top_    = 0;
     Stop();
     Play("");
     RenderMenu();
@@ -567,13 +570,14 @@ void App::RenderMenu(EpdSsd1683::Mode mode, bool only_if_changed) {
             for (const library::Entry& e : lib_.groups[list_group_].entries)
                 rows.push_back({e.name});
         }
-        menu::DrawList(frame_.data(), fonts_.title, rows, list_cursor_, kMenuLayout);
+        menu::DrawList(frame_.data(), fonts_.title, rows, list_cursor_, list_top_, kMenuLayout);
     } else {
         rows = {
             menu::Row::Back(),
             {"音量", std::to_string(VolumeLevel()), editing_volume_},
         };
-        menu::DrawList(frame_.data(), fonts_.title, rows, settings_cursor_, kMenuLayout);
+        int top = 0;
+        menu::DrawList(frame_.data(), fonts_.title, rows, settings_cursor_, top, kMenuLayout);
         menu::DrawRule(frame_.data(), kInfoRule);
         menu::DrawPairs(frame_.data(), fonts_.title, InfoRows(), kInfoTop, kInfoRowH);
     }

@@ -90,6 +90,7 @@ class App {
     ListLevel            list_level_    = ListLevel::kEntries;
     int                  list_group_    = 0;  // 列表项层显示的组
     int                  list_cursor_   = 0;  // 0 是「返回」，i 是第 i-1 行
+    int                  list_top_      = 0;  // 列表视口第一行，光标移出时逐行滚动
     int                  settings_cursor_ = 0;
     bool                 editing_volume_  = false;
     uint32_t             narration_token_ = 0;

@@ -53,10 +53,16 @@ void DrawPairs(uint8_t* fb, const BitmapFont& font, const std::vector<std::pair<
     }
 }
 
-void DrawList(uint8_t* fb, const BitmapFont& font, const std::vector<Row>& rows, int cursor, const Layout& layout) {
+void DrawList(uint8_t* fb, const BitmapFont& font, const std::vector<Row>& rows, int cursor, int& top,
+              const Layout& layout) {
     const int n       = static_cast<int>(rows.size());
     const int visible = std::max(1, (layout.bottom - layout.top) / layout.row_h);
-    const int first   = cursor / visible * visible;
+    if (cursor >= 0 && cursor < top)
+        top = cursor;
+    else if (cursor >= top + visible)
+        top = cursor - visible + 1;
+    top               = std::clamp(top, 0, std::max(0, n - visible));
+    const int first   = top;
     const int text_dy = (layout.row_h - font.height()) / 2;
 
     for (int i = first; i < n && i < first + visible; ++i) {
@@ -81,12 +87,11 @@ void DrawList(uint8_t* fb, const BitmapFont& font, const std::vector<Row>& rows,
         font.Draw(fb, vx, y + text_dy, row.value, false);
     }
 
-    // 滚动条：只有一页放不下时才画；只画滑块不画轨道（与 slate 相同），位置和长度对应当前页。
+    // 滚动条：只有一屏放不下时才画；只画滑块不画轨道（与 slate 相同），长度对应可见比例，位置对应视口。
     if (n > visible) {
         const int track_x = kW - 8, track_h = layout.bottom - layout.top;
-        const int pages = (n + visible - 1) / visible;
-        const int th    = std::max(8, track_h / pages);
-        const int ty    = layout.top + (track_h - th) * (first / visible) / std::max(1, pages - 1);
+        const int th      = std::max(8, track_h * visible / n);
+        const int ty      = layout.top + (track_h - th) * first / (n - visible);
         Fill(fb, track_x, ty, 3, th, false);
     }
 }
