@@ -8,3 +8,4 @@
 - 内容画面（故事和古诗的页、车辆和动物形象）不加文字（车身上本来就有的字除外），内容靠朗读；列表和设置页用文字列表。
 - 改了 `item.yaml` 的文案或画面描述后先运行 `chalk gen`（TTS key 是 `~/.config/secrets/env` 的 `CHALK_TTS_API_KEY`，不写进仓库），生成文件和 `gen.lock` 一起提交；CI 不配 key，过期即失败。
 - 提交信息不加 AI 署名或 Co-Authored-By。
+- 发版按 README「发布版本」：只用 annotated tag，Release notes 只来自 tag message 正文，不手动编辑 GitHub Release，不重跑旧版本 tag。

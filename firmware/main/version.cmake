@@ -1,13 +1,17 @@
-# 生成 version.c：固件版本，设置页下方显示。取 git 短提交号，工作区有未提交改动时加「+」。
-# 内容不变时不改写文件，避免无谓的重新链接。
+# 生成 version.c：固件版本，设置页下方显示。HEAD 正好是 vX.Y.Z tag 且工作区干净时取 tag，
+# 否则取 git 短提交号，有未提交改动时加「+」。内容不变时不改写文件，避免无谓的重新链接。
 execute_process(COMMAND git -C ${SRC} rev-parse --short HEAD OUTPUT_VARIABLE rev OUTPUT_STRIP_TRAILING_WHITESPACE
                 ERROR_QUIET)
+execute_process(COMMAND git -C ${SRC} describe --tags --exact-match --match "v[0-9]*" HEAD OUTPUT_VARIABLE tag
+                OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
 execute_process(COMMAND git -C ${SRC} status --porcelain OUTPUT_VARIABLE dirty OUTPUT_STRIP_TRAILING_WHITESPACE
                 ERROR_QUIET)
 if(rev STREQUAL "")
     set(rev "-")
 elseif(NOT dirty STREQUAL "")
     string(APPEND rev "+")
+elseif(NOT tag STREQUAL "")
+    set(rev "${tag}")
 endif()
 set(text "const char kFirmwareVersion[] = \"${rev}\";\n")
 if(EXISTS ${OUT})

@@ -63,7 +63,7 @@ Chalk（粉笔）是跑在 ZecTrix Note4（ESP32-S3 + 4.2" 400×300 黑白墨水
 | 返回 | 回到原来的内容接着播 |
 | 音量 | 进入编辑：上 / 下调 1–10 档，每调一档用新音量响一声，再按确认结束 |
 
-下方隔一道线只读显示三行：电池（电量或充电状态，加电压）、存储用量、固件版本（编译时取 git 短提交号，有未提交改动时加 `+`）。进入时光标停在「音量」。
+下方隔一道线只读显示三行：电池（电量或充电状态，加电压）、存储用量、固件版本（正式版显示 tag，如 `v0.1.0`；其他编译取 git 短提交号，有未提交改动时加 `+`）。进入时光标停在「音量」。
 
 列表和设置页 30 秒无操作自动回到内容画面。
 
@@ -103,10 +103,10 @@ Chalk（粉笔）是跑在 ZecTrix Note4（ESP32-S3 + 4.2" 400×300 黑白墨水
 
 ## 直接烧录
 
-[Releases](https://github.com/qiujun8023/chalk/releases) 里的 `chalk-<版本>.bin` 是含固件和内容的整片镜像，不用构建：
+[Releases](https://github.com/qiujun8023/chalk/releases) 里的 `chalk-zectrix-note4-<版本>-full.bin` 是含固件和内容的整片镜像，不用构建，校验值在同目录的 `-sha256.txt`：
 
 ```bash
-uvx esptool --chip esp32s3 write_flash 0x0 chalk-<版本>.bin
+uvx esptool --chip esp32s3 write_flash 0x0 chalk-zectrix-note4-<版本>-full.bin
 ```
 
 整片烧录会清掉设备上保存的位置和音量。
@@ -124,7 +124,25 @@ cd ../firmware && idf.py -p /dev/cu.usbmodem2101 flash
 - 重新烧内容镜像会清掉设备上保存的位置和音量。
 - `build/preview/` 里有每一帧的 PNG 和每个形象的动画 `anim.gif`，不用烧录就能检查效果。
 - storage 分区大小从 `firmware/partitions.csv` 读取。
-- 推送 `v*` tag 后，CI 构建并把整片镜像（`idf.py merge-bin`）发布到同名 Release；生成文件缺失或过期时 CI 构建失败。
+- master 上的 CI（`build.yml`）是滚动构建，验证能从仓库完整构建；生成文件缺失或过期时失败。
+
+### 发布版本
+
+推送 `vX.Y.Z` annotated tag 发布，tag message 即 Release notes：
+
+```bash
+git tag -a v0.1.0
+git push origin v0.1.0
+```
+
+```text
+Chalk v0.1.0
+
+- 内容：新增 ...
+- 固件：修复 ...
+```
+
+`release.yml` 校验 tag（格式、annotated、正文非空、是最新的 tag），构建整片镜像（`idf.py merge-bin`），把它和 sha256 上传到同名 Release。固件版本号直接取 tag，不用另改文件。
 
 ### 生成插图和朗读
 

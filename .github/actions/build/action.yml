@@ -1,0 +1,39 @@
+# 从仓库完整构建内容镜像和固件，产物是 firmware/build/merged-binary.bin（含 storage 分区的整片镜像）。
+# 需要在 espressif/idf 容器里运行，ESP-IDF 版本与 firmware/.envrc 一致。
+# 插图和朗读都已入库，chalk build 不调 AI；生成文件缺失或与 gen.lock 不一致时失败。
+name: build
+description: 构建内容和固件
+runs:
+  using: composite
+  steps:
+    # 容器内仓库属主不同，不加的话 git 拒绝读取，固件版本号会变成「-」。
+    - shell: bash
+      run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+    - shell: bash
+      run: apt-get update && apt-get install -y --no-install-recommends ffmpeg
+
+    - uses: actions/setup-go@v6
+      with:
+        go-version-file: tools/go.mod
+        cache-dependency-path: tools/go.sum
+
+    - uses: astral-sh/setup-uv@v7
+      with:
+        enable-cache: false # 只用 uvx 跑固定版本的 littlefs-python，没有依赖文件可做缓存键
+
+    - name: 内容
+      shell: bash
+      working-directory: tools
+      run: go vet . && go build -o chalk . && ./chalk build
+
+    # 构建不应改动仓库；工作区有变化也会让固件版本号带「+」。
+    - shell: bash
+      run: git status --porcelain && test -z "$(git status --porcelain)"
+
+    - name: 固件
+      shell: bash
+      working-directory: firmware
+      run: |
+        . "$IDF_PATH/export.sh"
+        idf.py build merge-bin
