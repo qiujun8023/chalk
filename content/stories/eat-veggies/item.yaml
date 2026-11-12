@@ -1,0 +1,17 @@
+type: story
+title: 小兔吃青菜
+pages:
+  - image: p01.png
+    say: 吃饭啦！小兔坐在小椅子上。
+  - image: p02.png
+    say: 小兔把青菜推到一边：我不要吃青菜！
+  - image: p03.png
+    say: 兔妈妈说：吃了青菜，身体棒棒，跑得快快。
+  - image: p04.png
+    say: 小兔尝了一小口，嚼一嚼。
+  - image: p05.png
+    say: 咦，脆脆的，真好吃！
+  - image: p06.png
+    say: 饭菜吃光光，小肚子圆鼓鼓。
+  - image: p07.png
+    say: 小兔吃饱了，蹦得高高的！

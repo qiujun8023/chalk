@@ -1,0 +1,17 @@
+type: story
+title: 第一天上幼儿园
+pages:
+  - image: p01.png
+    say: 今天，小朋友第一天上幼儿园。
+  - image: p02.png
+    say: 小朋友抱着妈妈：我不想和妈妈分开。
+  - image: p03.png
+    say: 妈妈说：下午我第一个来接你，拉钩！
+  - image: p04.png
+    say: 老师牵着她的手走进教室，小朋友们在搭积木。
+  - image: p05.png
+    say: 她和新朋友一起，搭了一座高高的塔。
+  - image: p06.png
+    say: 大家一起拍手唱歌，真开心。
+  - image: p07.png
+    say: 放学啦，妈妈第一个来接她！明天还要来！

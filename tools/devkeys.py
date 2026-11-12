@@ -1,4 +1,8 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.15"
+# dependencies = ["pyserial>=3.5"]
+# ///
 """通过 USB 串口向设备发送调试按键并打印日志。
 
 用法：devkeys.py [-p 端口] 'e 3 e 3 d 2'   # 字母是按键（见 app/input.cc），数字是等待秒数

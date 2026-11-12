@@ -1,105 +1,93 @@
 # 文案沿用 slate 的「工程车」合集：翻到某辆车时念整句，同时自动播一遍动画。
 # region 是源图像素 [x, y, w, h]，只在这个范围内采用关键帧，其余部分保持 base.png。
-type: vehicles
+type: figures
 title: 工程车
-vehicles:
+figures:
   - id: excavator
     name: 挖掘机
     intro: 挖掘机，挖呀挖。轰隆隆！
-    actions:
-      - frames:
-          - {image: k1.png, region: [0, 40, 690, 1046], ms: 400}
-          - {image: k2.png, region: [0, 0, 690, 1000], ms: 400}
-          - {image: base.png}
+    frames:
+      - {image: k1.png, region: [0, 40, 690, 1046], ms: 400}
+      - {image: k2.png, region: [0, 0, 690, 1000], ms: 400}
+      - {image: base.png}
   - id: loader
     name: 铲车
     intro: 铲车铲沙子。哐当！
-    actions:
-      - frames:
-          - {image: k1.png, region: [24, 528, 360, 384], ms: 400}
-          - {image: k2.png, region: [0, 0, 620, 980], ms: 400}
-          - {image: base.png}
+    frames:
+      - {image: k1.png, region: [24, 528, 360, 384], ms: 400}
+      - {image: k2.png, region: [0, 0, 620, 980], ms: 400}
+      - {image: base.png}
   - id: dump-truck
     name: 翻斗车
     intro: 翻斗车，倒泥土。哗啦！
-    actions:
-      - frames:
-          - {image: k1.png, region: [528, 0, 920, 912], ms: 600}
-          - {image: base.png, ms: 200}
-          - {image: k2.png, region: [560, 0, 888, 1086], ms: 800}
-          - {image: base.png}
+    frames:
+      - {image: k1.png, region: [528, 0, 920, 912], ms: 600}
+      - {image: base.png, ms: 200}
+      - {image: k2.png, region: [560, 0, 888, 1086], ms: 800}
+      - {image: base.png}
   - id: cement-mixer
     name: 水泥车
     intro: 水泥车，转一转。咕噜噜！
-    actions:
-      - frames:
-          - {image: k1.png, region: [540, 100, 880, 560], ms: 200}
-          - {image: k2.png, region: [540, 100, 880, 560], ms: 200}
-          - {image: k1.png, region: [540, 100, 880, 560], ms: 200}
-          - {image: k2.png, region: [540, 100, 880, 560]}
+    frames:
+      - {image: k1.png, region: [540, 100, 880, 560], ms: 200}
+      - {image: k2.png, region: [540, 100, 880, 560], ms: 200}
+      - {image: k1.png, region: [540, 100, 880, 560], ms: 200}
+      - {image: k2.png, region: [540, 100, 880, 560]}
   - id: crane
     name: 吊车
     intro: 吊车吊得高。吱呀——！
-    actions:
-      - frames:
-          - {image: k1.png, region: [40, 40, 150, 1046], ms: 400}
-          - {image: k2.png, region: [0, 120, 330, 540], ms: 800}
-          - {image: base.png}
+    frames:
+      - {image: k1.png, region: [40, 40, 150, 1046], ms: 400}
+      - {image: k2.png, region: [0, 120, 330, 540], ms: 800}
+      - {image: base.png}
   - id: sprinkler-truck
     name: 洒水车
     intro: 洒水车，洒洒水。哗——！
-    actions:
-      - frames:
-          - {image: k2.png, region: [0, 540, 460, 546], ms: 400}
-          - {image: base.png, ms: 300}
-          - {image: k2.png, region: [0, 540, 460, 546], ms: 800}
-          - {image: base.png}
+    frames:
+      - {image: k2.png, region: [0, 540, 460, 546], ms: 400}
+      - {image: base.png, ms: 300}
+      - {image: k2.png, region: [0, 540, 460, 546], ms: 800}
+      - {image: base.png}
   - id: garbage-truck
     name: 垃圾车
     intro: 垃圾车，吃垃圾。咕噜！
-    actions:
-      - frames:
-          - {image: k1.png, region: [1032, 24, 416, 840], ms: 400}
-          - {image: k2.png, region: [980, 0, 468, 900], ms: 800}
-          - {image: base.png}
+    frames:
+      - {image: k1.png, region: [1032, 24, 416, 840], ms: 400}
+      - {image: k2.png, region: [980, 0, 468, 900], ms: 800}
+      - {image: base.png}
   - id: fire-truck
     name: 消防车
     intro: 消防车救火啦！呜——！
-    actions:
-      - frames:
-          - {image: k1.png, region: [0, 0, 336, 192], ms: 400}
-          - {image: k2.png, region: [0, 0, 336, 528], ms: 800}
-          - {image: base.png}
+    frames:
+      - {image: k1.png, region: [0, 0, 336, 192], ms: 400}
+      - {image: k2.png, region: [0, 0, 336, 528], ms: 800}
+      - {image: base.png}
   - id: ambulance
     name: 救护车
     intro: 救护车，去医院。嘀嘟嘀嘟！
-    actions:
-      - frames:
-          - {image: k1.png, region: [312, 72, 576, 288], ms: 300}
-          - {image: base.png, ms: 300}
-          - {image: k1.png, region: [312, 72, 576, 288], ms: 300}
-          - {image: base.png}
+    frames:
+      - {image: k1.png, region: [312, 72, 576, 288], ms: 300}
+      - {image: base.png, ms: 300}
+      - {image: k1.png, region: [312, 72, 576, 288], ms: 300}
+      - {image: base.png}
   - id: police-car
     name: 警车
     intro: 警察警察，让一让！呜哇呜哇！
-    actions:
-      - frames:
-          - {image: k1.png, region: [552, 120, 480, 192], ms: 200}
-          - {image: k2.png, region: [552, 72, 480, 240], ms: 200}
-          - {image: k1.png, region: [552, 120, 480, 192], ms: 200}
-          - {image: base.png}
+    frames:
+      - {image: k1.png, region: [552, 120, 480, 192], ms: 200}
+      - {image: k2.png, region: [552, 72, 480, 240], ms: 200}
+      - {image: k1.png, region: [552, 120, 480, 192], ms: 200}
+      - {image: base.png}
   - id: bus
     name: 巴士
     intro: 巴士，到站啦。叮咚！
-    actions:
-      - frames:
-          - {image: k1.png, region: [1032, 384, 192, 360], ms: 1200}
-          - {image: base.png}
+    frames:
+      - {image: k1.png, region: [1032, 384, 192, 360], ms: 1200}
+      - {image: base.png}
   - id: taxi
     name: 出租车
     intro: 出租车，请上车。嘀！
-    actions:
-      - frames:
-          - {image: k1.png, region: [680, 40, 280, 230], ms: 400}
-          - {image: k2.png, region: [0, 500, 100, 172], ms: 400}
-          - {image: base.png}
+    frames:
+      - {image: k1.png, region: [680, 40, 280, 230], ms: 400}
+      - {image: k2.png, region: [0, 500, 100, 172], ms: 400}
+      - {image: base.png}

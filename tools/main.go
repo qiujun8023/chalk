@@ -35,8 +35,13 @@ func main() {
 	if err := b.build(); err != nil {
 		fatal(err)
 	}
-	if err := buildImage(buildDir, b.fsDir); err != nil {
+	if err := buildImage(buildDir, b.fsDir, filepath.Join(root, "firmware", "partitions.csv")); err != nil {
 		fatal(err)
+	}
+	if n, err := b.tts.prune(); err != nil {
+		fatal(err)
+	} else if n > 0 {
+		fmt.Printf("tts cache: removed %d unused files\n", n)
 	}
 }
 

@@ -35,6 +35,7 @@ type tts struct {
 	baseURL  string
 	model    string
 	voice    string
+	used     map[string]bool // 本次构建用到的缓存文件，prune 时保留
 }
 
 // 用 OpenAI 兼容的流式 chat/completions 接口合成（与 slate 相同，默认小米 MiMo、音色冰糖）。
@@ -46,6 +47,7 @@ func newTTS(cacheDir string) *tts {
 		baseURL:  strings.TrimRight(envOr("TTS_BASE_URL", "https://api.xiaomimimo.com/v1"), "/"),
 		model:    envOr("TTS_MODEL", "mimo-v2.5-tts"),
 		voice:    envOr("TTS_VOICE", "冰糖"),
+		used:     map[string]bool{},
 	}
 }
 
@@ -58,6 +60,7 @@ func (t *tts) speak(text string) (string, error) {
 		return "", errors.New("朗读文本为空")
 	}
 	out := filepath.Join(t.cacheDir, hashOf(t.provider(), text)+".ogg")
+	t.used[out] = true
 	if _, err := os.Stat(out); err == nil {
 		return out, nil
 	}
@@ -73,6 +76,29 @@ func (t *tts) speak(text string) (string, error) {
 		return "", fmt.Errorf("TTS %q: %w", text, err)
 	}
 	return out, os.Rename(tmp, out)
+}
+
+// keep 把不是 speak 生成的缓存文件（提示音）标记为在用。
+func (t *tts) keep(p string) { t.used[p] = true }
+
+// prune 删除本次构建没用到的缓存文件（改过的旧文案、中断留下的临时文件），返回删除个数。
+func (t *tts) prune() (int, error) {
+	entries, err := os.ReadDir(t.cacheDir)
+	if err != nil {
+		return 0, err
+	}
+	n := 0
+	for _, e := range entries {
+		p := filepath.Join(t.cacheDir, e.Name())
+		if e.IsDir() || t.used[p] {
+			continue
+		}
+		if err := os.Remove(p); err != nil {
+			return n, err
+		}
+		n++
+	}
+	return n, nil
 }
 
 func (t *tts) speakRemote(text, out string) error {

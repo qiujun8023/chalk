@@ -1,0 +1,15 @@
+type: story
+title: 小猪收玩具
+pages:
+  - image: p01.png
+    say: 小猪玩了一下午，玩具扔得满地都是。
+  - image: p02.png
+    say: 哎哟！小猪踩到了积木，好疼呀。
+  - image: p03.png
+    say: 积木回家啦，一块，两块，三块。
+  - image: p04.png
+    say: 小汽车，开回车库，嘀嘀！
+  - image: p05.png
+    say: 皮球和布娃娃，也回家睡觉啦。
+  - image: p06.png
+    say: 房间干干净净，小猪真能干！

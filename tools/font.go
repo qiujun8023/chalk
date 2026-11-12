@@ -55,6 +55,9 @@ func block(src, name string) (string, error) {
 		return "", fmt.Errorf("找不到 %s", name)
 	}
 	j := strings.Index(src[i:], "};")
+	if j < 0 {
+		return "", fmt.Errorf("%s 没有结尾的 };", name)
+	}
 	return src[i+len(name) : i+j], nil
 }
 

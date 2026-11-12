@@ -3,8 +3,10 @@
 #include <driver/usb_serial_jtag.h>
 #include <driver/usb_serial_jtag_vfs.h>
 #include <esp_log.h>
+#include <esp_timer.h>
 
 #include <atomic>
+#include <iterator>
 
 #include "bsp/board.h"
 #include "drivers/input/button.h"
@@ -21,15 +23,22 @@ constexpr uint8_t kDownBit  = 1u << 1;
 constexpr uint8_t kEnterBit = 1u << 2;
 constexpr uint8_t kSideBits = kUpBit | kDownBit;
 
-// 按键回调都在 iot_button 的定时器上下文里串行执行。
+// 按键回调和下面的 s_flush 定时器都在 esp_timer task 里串行执行（iot_button 用 ESP_TIMER_TASK 分发）。
 // held：当前按住的键；consumed：已被组合键或长按吃掉、松手后不再触发短按的键。
 // 短按在松手时立即触发，不等 iot_button 的单击判定（它要等双击窗口，连按还会被当成双击丢掉）；
-// immediate 时（列表、设置页，长按不另作他用）按下就触发。
+// immediate 时（列表、设置页，长按不另作他用）按下就触发，但先等 kComboWindowUs：
+// 组合键的几个键不会同时落下，窗口内凑成组合就丢掉先按的单键，否则窗口到时（或先松手）再发出。
 // 上下同时按住时组合开始：期间确认也按下就是三键（立即触发设置）；否则上下都松开时触发组列表。
+constexpr int64_t kComboWindowUs = 80 * 1000;
+
 uint8_t s_held     = 0;
 uint8_t s_consumed = 0;
 bool    s_combo    = false;
 bool    s_settings = false;
+
+esp_timer_handle_t s_flush     = nullptr;
+Ev                 s_pending[3]{};  // immediate 时按下、还在等组合判定的单键，按按下顺序
+int                s_pending_n = 0;
 
 std::atomic<bool> s_immediate{false};
 
@@ -44,17 +53,33 @@ void PostButton(Ev ev) {
     Post(ev);
 }
 
+void FlushPending() {
+    esp_timer_stop(s_flush);
+    for (int i = 0; i < s_pending_n; ++i)
+        PostButton(s_pending[i]);
+    s_pending_n = 0;
+}
+
+void DropPending() {
+    esp_timer_stop(s_flush);
+    s_pending_n = 0;
+}
+
 void PressDown(uint8_t bit, Ev click) {
     s_consumed &= ~bit;
     s_held |= bit;
     if ((s_held & kSideBits) != kSideBits) {
         if (s_immediate.load(std::memory_order_relaxed)) {
             s_consumed |= bit;
-            PostButton(click);
+            if (s_pending_n < static_cast<int>(std::size(s_pending)))
+                s_pending[s_pending_n++] = click;
+            esp_timer_stop(s_flush);
+            esp_timer_start_once(s_flush, kComboWindowUs);
         }
         return;
     }
     s_combo = true;
+    DropPending();
     s_consumed |= kSideBits;
     if ((s_held & kEnterBit) && !s_settings) {
         s_settings = true;
@@ -65,6 +90,8 @@ void PressDown(uint8_t bit, Ev click) {
 
 void PressUp(uint8_t bit, Ev click) {
     s_held &= ~bit;
+    if (s_pending_n > 0)
+        FlushPending();  // 窗口内就松手：是单击，不再等
     if (!(s_consumed & bit))
         PostButton(click);
     if (s_combo && !(s_held & kSideBits)) {
@@ -120,7 +147,12 @@ void ConsoleTask(void*) {
 }  // namespace
 
 void Install(QueueHandle_t queue) {
-    s_queue     = queue;
+    s_queue                     = queue;
+    esp_timer_create_args_t cfg = {};
+    cfg.callback                = [](void*) { FlushPending(); };
+    cfg.dispatch_method         = ESP_TIMER_TASK;
+    cfg.name                    = "combo";
+    ESP_ERROR_CHECK(esp_timer_create(&cfg, &s_flush));
     Board& b    = Board::Get();
     Bind(b.up_btn(), kUpBit, Ev::kUp, Ev::kUpLong);
     Bind(b.down_btn(), kDownBit, Ev::kDown, Ev::kDownLong);

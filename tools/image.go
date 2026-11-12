@@ -106,17 +106,20 @@ func composeRegion(base, frame *image.Gray, region []int) (*image.Gray, error) {
 	if len(region) == 0 {
 		return frame, nil
 	}
-	if len(region) != 4 {
-		return nil, fmt.Errorf("region 需要 [x, y, w, h]")
+	if len(region) != 4 || region[2] <= 0 || region[3] <= 0 {
+		return nil, fmt.Errorf("region %v 需要 [x, y, w, h]，宽高为正", region)
+	}
+	r := image.Rect(region[0], region[1], region[0]+region[2], region[1]+region[3])
+	if !r.In(base.Bounds()) {
+		return nil, fmt.Errorf("region %v 超出图片 %v", region, base.Bounds().Size())
 	}
 	out := image.NewGray(base.Bounds())
 	copy(out.Pix, base.Pix)
-	r := image.Rect(region[0], region[1], region[0]+region[2], region[1]+region[3]).Intersect(base.Bounds())
 	draw.Draw(out, r, frame, r.Min, draw.Src)
 	return out, nil
 }
 
-// placement 描述源图的裁剪区域和它在屏幕上的位置。同一辆车的所有关键帧共用 base 的 placement。
+// placement 描述源图的裁剪区域和它在屏幕上的位置。同一形象的所有关键帧共用一个 placement。
 type placement struct {
 	crop image.Rectangle
 	dst  image.Rectangle

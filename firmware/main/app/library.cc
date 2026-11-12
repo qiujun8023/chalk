@@ -33,18 +33,13 @@ bool ParseEntry(const cJSON* j, Entry& e) {
         }
         return !e.pages.empty();
     }
-    if (type == "vehicle") {
-        e.kind         = Kind::kVehicle;
+    if (type == "figure") {
+        e.kind         = Kind::kFigure;
         e.base         = Str(j, "base");
         e.intro        = Str(j, "intro");
-        const cJSON* a = nullptr;
-        cJSON_ArrayForEach(a, cJSON_GetObjectItemCaseSensitive(j, "actions")) {
-            Action       action;
-            const cJSON* f = nullptr;
-            cJSON_ArrayForEach(f, cJSON_GetObjectItemCaseSensitive(a, "frames")) {
-                action.frames.push_back({Str(f, "img"), Int(f, "ms", 0)});
-            }
-            e.actions.push_back(std::move(action));
+        const cJSON* f = nullptr;
+        cJSON_ArrayForEach(f, cJSON_GetObjectItemCaseSensitive(j, "frames")) {
+            e.frames.push_back({Str(f, "img"), Int(f, "ms", 0)});
         }
         return !e.base.empty();
     }

@@ -1,17 +1,25 @@
-# 组和组内项的顺序。每项是 content/ 下含 item.yaml 的目录；vehicles 类型的项展开成其中的每一辆车。
+# 组和组内项的顺序。每项是 content/ 下含 item.yaml 的目录；figures 类型的项（车辆、动物）展开成其中的每一个形象。
 groups:
   - title: 工程车
     items:
       - vehicles
+  - title: 小动物
+    items:
+      - animals
   - title: 小故事
     items:
       - stories/get-dressed
       - stories/brush-teeth
+      - stories/wash-hands
+      - stories/eat-veggies
+      - stories/tidy-toys
       - stories/zoo-bus
       - stories/duck-crossing
       - stories/garbage-day
       - stories/construction-day
       - stories/fire-rescue
+      - stories/doctor-visit
+      - stories/first-day
       - stories/rainy-day
       - stories/snowman
       - stories/good-night

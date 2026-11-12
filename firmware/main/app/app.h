@@ -13,7 +13,7 @@
 #include "power/sleep.h"
 #include "ui/status_bar.h"
 
-// 界面状态机，跑在单独的 task 里。内容分组（工程车、小故事、古诗），平时显示当前组当前项（车或故事）的画面；
+// 界面状态机，跑在单独的 task 里。内容分组（工程车、小动物、小故事、古诗），平时显示当前组当前项（形象或故事）的画面；
 // 上下短按组内切换，长按切组，确认从头再播；上下同按进列表，三键同按进设置。
 // 刷屏是阻塞的，期间到达的按键只保留最后一个。
 class App {
@@ -39,13 +39,13 @@ class App {
     void SelectEntry(int group, int entry);
     // 从第一页开始播当前项：先依次念 intro（组名、故事标题），再念第一页。
     void StartEntry(bool with_group_title);
-    void ShowPage(bool speak);  // 画当前页；speak 时开始朗读（车还播动画）
+    void ShowPage(bool speak);  // 画当前页；speak 时开始朗读（形象还播动画）
     void SpeakCurrent();        // 画面已在屏上，只开始朗读和动画
-    void Narrate();             // 开始念当前页（车是介绍）
+    void Narrate();             // 开始念当前页（形象是介绍）
     void OnAudioDone(uint32_t token);
     void Schedule(Auto what, int delay_ms);
     void RunAuto();
-    void PlayAction();
+    void PlayAnimation();
     bool HasPendingButton();
     bool WaitButton(int ms);  // 等待 ms，期间有按键返回 true
     void EnterList();
@@ -86,7 +86,6 @@ class App {
     int                  group_ = 0;
     std::vector<int>     positions_;  // 每组的当前项
     int                  page_          = 0;  // 当前项（故事）的当前页
-    int                  action_cursor_ = 0;
     ListLevel            list_level_    = ListLevel::kEntries;
     int                  list_group_    = 0;  // 列表项层显示的组
     int                  list_cursor_   = 0;  // 0 是「返回」，i 是第 i-1 行

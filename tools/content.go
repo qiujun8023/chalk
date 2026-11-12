@@ -16,16 +16,16 @@ type librarySrc struct {
 
 type groupSrc struct {
 	Title string   `yaml:"title"`
-	Items []string `yaml:"items"` // content/ 下含 item.yaml 的目录；vehicles 类型的项展开成其中的每一辆车
+	Items []string `yaml:"items"` // content/ 下含 item.yaml 的目录；figures 类型的项展开成其中的每一个形象
 }
 
 // content/<item>/item.yaml。
 type itemSrc struct {
-	Type     string       `yaml:"type"` // story | vehicles
-	Title    string       `yaml:"title"`
-	Author   string       `yaml:"author"` // 古诗作者，标题朗读成「诗名，作者」
-	Pages    []pageSrc    `yaml:"pages"`
-	Vehicles []vehicleSrc `yaml:"vehicles"`
+	Type    string      `yaml:"type"` // story | figures
+	Title   string      `yaml:"title"`
+	Author  string      `yaml:"author"` // 古诗作者，标题朗读成「诗名，作者」
+	Pages   []pageSrc   `yaml:"pages"`
+	Figures []figureSrc `yaml:"figures"`
 }
 
 type pageSrc struct {
@@ -33,14 +33,11 @@ type pageSrc struct {
 	Say   string `yaml:"say"` // 旁白
 }
 
-type vehicleSrc struct {
-	ID      string      `yaml:"id"` // 子目录名
-	Name    string      `yaml:"name"`
-	Intro   string      `yaml:"intro"`
-	Actions []actionSrc `yaml:"actions"`
-}
-
-type actionSrc struct {
+// 一个形象（一辆车、一只动物）：原图 + 介绍 + 一段关键帧动画。
+type figureSrc struct {
+	ID     string     `yaml:"id"` // 子目录名
+	Name   string     `yaml:"name"`
+	Intro  string     `yaml:"intro"`
 	Frames []frameSrc `yaml:"frames"`
 }
 
@@ -75,9 +72,16 @@ func loadItem(contentDir, name string) (*itemSrc, error) {
 		if len(it.Pages) == 0 {
 			return nil, fmt.Errorf("%s: story 没有 pages", name)
 		}
-	case "vehicles":
-		if len(it.Vehicles) == 0 {
-			return nil, fmt.Errorf("%s: vehicles 为空", name)
+	case "figures":
+		if len(it.Figures) == 0 {
+			return nil, fmt.Errorf("%s: figures 为空", name)
+		}
+		seen := map[string]bool{}
+		for _, f := range it.Figures {
+			if f.ID == "" || seen[f.ID] {
+				return nil, fmt.Errorf("%s: figure id %q 为空或重复", name, f.ID)
+			}
+			seen[f.ID] = true
 		}
 	default:
 		return nil, fmt.Errorf("%s: 未知 type %q", name, it.Type)

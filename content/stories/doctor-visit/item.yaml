@@ -1,0 +1,17 @@
+type: story
+title: 去医院打针
+pages:
+  - image: p01.png
+    say: 阿嚏！小朋友感冒了，鼻子痒痒的。
+  - image: p02.png
+    say: 妈妈带他去医院看医生。
+  - image: p03.png
+    say: 医生阿姨用听诊器听一听：扑通，扑通。
+  - image: p04.png
+    say: 要打针啦，小朋友有点害怕，紧紧抱住妈妈。
+  - image: p05.png
+    say: 像小蚂蚁咬了一下，一下就好了。小朋友没有哭！
+  - image: p06.png
+    say: 医生阿姨夸他真勇敢，送他一颗小星星。
+  - image: p07.png
+    say: 过了几天，病好啦，又能出去玩啦！

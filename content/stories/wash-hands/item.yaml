@@ -1,0 +1,17 @@
+type: story
+title: 小熊洗手
+pages:
+  - image: p01.png
+    say: 小熊在院子里玩沙子，挖呀挖，真开心！
+  - image: p02.png
+    say: 哎呀，小手脏脏的。吃饭前，要先洗手。
+  - image: p03.png
+    say: 打开水龙头，哗啦啦，把小手冲湿。
+  - image: p04.png
+    say: 抹上香皂，搓呀搓，搓出好多小泡泡。
+  - image: p05.png
+    say: 手心、手背、手指缝，都冲干净。
+  - image: p06.png
+    say: 用小毛巾擦一擦，小手干干的。
+  - image: p07.png
+    say: 小手洗得香喷喷，吃饭啦！

@@ -88,7 +88,7 @@ void App::Run(power::WakeSource wake) {
     queue_ = xQueueCreate(8, sizeof(Event));
     if (!library::Load(kRoot, lib_) || !fonts_.title.Load(Abs(lib_.font16)) || !fonts_.digits.Load(Abs(lib_.font12))) {
         ESP_LOGE(kTag, "content missing; nothing to show");
-        vTaskDelay(portMAX_DELAY);
+        vTaskSuspend(nullptr);
     }
     saved_.Load(kState);
     AudioPlayer::Get().OnDone([q = queue_](uint32_t token) {
@@ -331,11 +331,10 @@ void App::SelectEntry(int group, int entry) {
     StartEntry(/*with_group_title=*/changed);
 }
 
-// 开场（组名、故事标题）念完再念第一页；没有开场时直接朗读，车同时播动画。
+// 开场（组名、故事标题）念完再念第一页；没有开场时直接朗读，形象同时播动画。
 void App::StartEntry(bool with_group_title) {
     Stop();
-    page_          = 0;
-    action_cursor_ = 0;
+    page_ = 0;
     intro_.clear();
     if (with_group_title)
         intro_.push_back(Group().title_audio);
@@ -351,19 +350,19 @@ void App::StartEntry(bool with_group_title) {
     ShowPage(/*speak=*/false);
 }
 
-// 先出声再刷屏，刷新的等待被朗读盖住；车在画面刷好后播动画。
+// 先出声再刷屏，刷新的等待被朗读盖住；形象在画面刷好后播动画。
 void App::ShowPage(bool speak) {
     if (speak)
         Narrate();
     Render(IsStory() ? Current().pages[page_].img : Current().base, NextMode());
     if (speak && !IsStory())
-        PlayAction();
+        PlayAnimation();
 }
 
 void App::SpeakCurrent() {
     Narrate();
     if (!IsStory())
-        PlayAction();
+        PlayAnimation();
 }
 
 void App::Narrate() {
@@ -415,16 +414,14 @@ void App::Stop() {
     auto_at_ms_ = 0;
 }
 
-void App::PlayAction() {
-    const library::Entry& v = Current();
-    if (v.actions.empty())
+void App::PlayAnimation() {
+    const library::Entry& fig = Current();
+    if (fig.frames.empty())
         return;
-    const library::Action& action = v.actions[action_cursor_ % v.actions.size()];
-    action_cursor_                = (action_cursor_ + 1) % static_cast<int>(v.actions.size());
-    const int64_t start_ms        = time_utils::NowMs();
+    const int64_t start_ms = time_utils::NowMs();
     // 动画期间有按键就停下，交给主循环处理那次按键（下一屏会直接覆盖当前帧）。
     bool interrupted = false;
-    for (const library::Frame& f : action.frames) {
+    for (const library::Frame& f : fig.frames) {
         if ((interrupted = HasPendingButton()))
             break;
         Render(f.img, EpdSsd1683::Mode::kPartial);
@@ -432,8 +429,8 @@ void App::PlayAction() {
             break;
     }
 
-    ESP_LOGI(kTag, "action done vehicle=%s frames=%u interrupted=%d elapsed_ms=%lld", v.name.c_str(),
-             static_cast<unsigned>(action.frames.size()), interrupted ? 1 : 0,
+    ESP_LOGI(kTag, "animation done name=%s frames=%u interrupted=%d elapsed_ms=%lld", fig.name.c_str(),
+             static_cast<unsigned>(fig.frames.size()), interrupted ? 1 : 0,
              static_cast<long long>(time_utils::NowMs() - start_ms));
 }
 

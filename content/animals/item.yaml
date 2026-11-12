@@ -1,0 +1,93 @@
+# 翻到某只动物时念整句，同时自动播一遍动画。
+# region 是源图像素 [x, y, w, h]，只在这个范围内采用关键帧，其余部分保持 base.png。
+type: figures
+title: 小动物
+figures:
+  - id: cat
+    name: 小猫
+    intro: 小花猫，喵喵叫。喵——！
+    frames:
+      - {image: k1.png, region: [1177, 426, 202, 154], ms: 600}
+      - {image: k2.png, region: [84, 41, 590, 563], ms: 500}
+      - {image: base.png}
+  - id: dog
+    name: 小狗
+    intro: 小狗摇尾巴。汪汪！
+    frames:
+      - {image: k1.png, region: [74, 309, 266, 233], ms: 300}
+      - {image: k2.png, region: [194, 249, 1219, 324], ms: 300}
+      - {image: k1.png, region: [74, 309, 266, 233], ms: 300}
+      - {image: k2.png, region: [194, 249, 1219, 324], ms: 300}
+      - {image: base.png}
+  - id: rooster
+    name: 大公鸡
+    intro: 大公鸡，早早起。喔喔喔！
+    frames:
+      - {image: k1.png, region: [731, 0, 626, 617], ms: 1000}
+      - {image: base.png}
+  - id: duck
+    name: 小鸭子
+    intro: 小鸭子，游呀游。嘎嘎！
+    frames:
+      - {image: k1.png, region: [268, 92, 1114, 777], ms: 500}
+      - {image: base.png, ms: 200}
+      - {image: k2.png, region: [42, 533, 1248, 387], ms: 800}
+      - {image: base.png}
+  - id: frog
+    name: 小青蛙
+    intro: 小青蛙，呱呱叫。呱呱！
+    frames:
+      - {image: k1.png, region: [972, 244, 395, 441], ms: 400}
+      - {image: base.png, ms: 200}
+      - {image: k1.png, region: [972, 244, 395, 441], ms: 400}
+      - {image: base.png}
+  - id: elephant
+    name: 大象
+    intro: 大象鼻子长，喷喷水。噗——！
+    frames:
+      - {image: k1.png, region: [1073, 7, 346, 945], ms: 400}
+      - {image: k2.png, region: [1073, 0, 375, 952], ms: 1000}
+      - {image: base.png}
+  - id: bird
+    name: 小鸟
+    intro: 小鸟拍翅膀。叽叽喳喳！
+    frames:
+      - {image: k1.png, region: [278, 26, 1098, 715], ms: 300}
+      - {image: k2.png, region: [278, 26, 1098, 844], ms: 300}
+      - {image: k1.png, region: [278, 26, 1098, 715], ms: 300}
+      - {image: base.png}
+  - id: rabbit
+    name: 小白兔
+    intro: 小白兔，吃萝卜。咔嚓咔嚓！
+    frames:
+      - {image: k1.png, region: [821, 478, 143, 128], ms: 600}
+      - {image: k2.png, region: [804, 464, 346, 277], ms: 800}
+      - {image: base.png}
+  - id: fish
+    name: 小鱼
+    intro: 小鱼吐泡泡。咕噜咕噜！
+    frames:
+      - {image: k1.png, region: [1191, 49, 252, 467], ms: 500}
+      - {image: k2.png, region: [1191, 49, 252, 467], ms: 800}
+      - {image: base.png}
+  - id: lion
+    name: 大狮子
+    intro: 大狮子，吼一吼。嗷呜——！
+    frames:
+      - {image: k1.png, region: [1063, 375, 385, 301], ms: 1000}
+      - {image: base.png}
+  - id: pig
+    name: 小猪
+    intro: 小猪胖嘟嘟。哼哼！
+    frames:
+      - {image: k1.png, region: [559, 1, 873, 629], ms: 400}
+      - {image: base.png, ms: 200}
+      - {image: k1.png, region: [559, 1, 873, 629], ms: 400}
+      - {image: base.png}
+  - id: cow
+    name: 奶牛
+    intro: 大奶牛，甩尾巴。哞——！
+    frames:
+      - {image: k1.png, region: [783, 5, 651, 571], ms: 800}
+      - {image: k2.png, region: [12, 22, 259, 845], ms: 500}
+      - {image: base.png}
