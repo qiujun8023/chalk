@@ -5,8 +5,8 @@
 
 #include "ui/font.h"
 
-// 顶部 24px 状态栏，布局与 slate 相同：中间标题（Zfull 16px），右侧电量百分比（Zfull 12px）+ 电池图标，
-// 底部一条分隔线。slate 左侧是 WiFi，这里不联网，换成进度。
+// 顶部 24px 状态栏：左侧进度，中间标题（Zfull 16px），右侧电量百分比（Zfull 12px）+ 电池图标，
+// 底部一条分隔线。
 struct StatusBarState {
     std::string progress;  // 如 "3/12"
     std::string caption;   // 如 "挖掘机"、"目录"、"设置"

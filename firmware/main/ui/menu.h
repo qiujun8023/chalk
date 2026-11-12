@@ -7,7 +7,7 @@
 
 #include "ui/font.h"
 
-// 状态栏下方的文字列表（内容列表、设置），一行一项，选中行左侧画黑条（与 slate 相同）；
+// 状态栏下方的文字列表（内容列表、设置），一行一项，选中行左侧画黑条；
 // 放不下时视口跟着光标逐行滚动，右侧画滚动条。
 namespace menu {
 
@@ -34,7 +34,7 @@ struct Layout {
 };
 
 // fb 需已清成白底。cursor 为 -1 时不画光标。
-// top 是视口第一行，调用方跨帧保存；光标移出视口时只滚到刚好能看见光标（与 slate 相同），结果写回 top。
+// top 是视口第一行，调用方跨帧保存；光标移出视口时只滚到刚好能看见光标，结果写回 top。
 void DrawList(uint8_t* fb, const BitmapFont& font, const std::vector<Row>& rows, int cursor, int& top,
               const Layout& layout);
 

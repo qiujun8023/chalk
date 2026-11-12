@@ -58,7 +58,7 @@ class App {
 
     // 画一帧：内容图 + 状态栏。
     void             Render(const std::string& img, EpdSsd1683::Mode mode);
-    // 画列表 / 设置页，默认局刷（残影换响应速度，与 slate 相同）；only_if_changed 时与屏上画面相同就不刷。
+    // 画列表 / 设置页，默认局刷（残影换响应速度）；only_if_changed 时与屏上画面相同就不刷。
     void             RenderMenu(EpdSsd1683::Mode mode = EpdSsd1683::Mode::kPartial, bool only_if_changed = false);
     std::vector<std::pair<std::string, std::string>> InfoRows() const;
     EpdSsd1683::Mode NextMode() const;

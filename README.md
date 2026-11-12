@@ -40,7 +40,7 @@ Chalk（粉笔）是跑在 ZecTrix Note4（ESP32-S3 + 4.2" 400×300 黑白墨水
 - **项层**：进入列表时显示当前组的各项，光标停在当前项。确认播放那一项；「返回」到组层。
 - **组层**：各组一行，光标停在刚才的组。确认进入那一组的项层；「返回」回到原来的内容接着播。
 
-一屏 7 行，放不下时光标到边缘逐行滚动（与 slate 相同），右侧滑块显示位置。
+一屏 7 行，放不下时光标到边缘逐行滚动，右侧滑块显示位置。
 
 ### 设置
 
@@ -55,7 +55,7 @@ Chalk（粉笔）是跑在 ZecTrix Note4（ESP32-S3 + 4.2" 400×300 黑白墨水
 
 ## 状态栏
 
-顶部 24px，布局与字体取自 slate（Zfull 16px 标题、12px 数字），底部一条分隔线。
+顶部 24px，用 Zfull 点阵字体（16px 标题、12px 数字），底部一条分隔线。
 
 | 位置 | 内容 |
 | --- | --- |
@@ -81,7 +81,7 @@ Chalk（粉笔）是跑在 ZecTrix Note4（ESP32-S3 + 4.2" 400×300 黑白墨水
 | 目录 | 内容 |
 | --- | --- |
 | `firmware/` | ESP-IDF 5.5 固件 |
-| `tools/` | Go 内容编译器 `chalk`、字库源（`fonts/`，取自 slate）、Codex 生图脚本（`art/`）、串口调试脚本 |
+| `tools/` | Go 内容编译器 `chalk`、字库源（`fonts/`，Zfull 的 LVGL 点阵）、Codex 生图脚本（`art/`）、串口调试脚本 |
 | `content/` | 源内容：线稿、关键帧、文案 |
 | `build/` | 编译产物（不入库）：`fs/`、`storage.bin`、`preview/`、生图日志 `art-logs/` |
 
@@ -102,7 +102,7 @@ cd ../firmware && idf.py -p /dev/cu.usbmodem2101 flash
 
 ### TTS
 
-朗读用 OpenAI 兼容的流式 `chat/completions` 接口合成，与 slate 相同。
+朗读用 OpenAI 兼容的流式 `chat/completions` 接口合成。
 
 | 变量 | 默认 |
 | --- | --- |
@@ -186,7 +186,7 @@ tools/devkeys.py 'd 3 D 5 e 3 i'   # 字母是按键，数字是等待秒数
 
 ## 硬件
 
-引脚、电源时序、EPD 和 ES8311 的细节与 slate 相同，见 slate 的 `firmware/README.md`。分区：
+引脚定义见 `firmware/main/bsp/config.h`，电源和音频上电时序见 `bsp/board_power.h`、`power/sleep.cc` 的注释。分区：
 
 | 分区 | 偏移 | 大小 | 用途 |
 | --- | --- | --- | --- |
@@ -194,3 +194,8 @@ tools/devkeys.py 'd 3 D 5 e 3 i'   # 字母是按键，数字是等待秒数
 | `phy_init` | `0xf000` | 4 KB | 未使用 |
 | `factory` | `0x10000` | 2 MB | 固件 |
 | `storage` | `0x210000` | 约 14 MB | LittleFS：内容、`state.json`、`screen.bin` |
+
+## 许可证
+
+- **代码**（`firmware/`、`tools/` 等）：[MIT](LICENSE)
+- **内容**（`content/` 下的线稿、插图和文案）：[CC BY-NC-SA 4.0](LICENSE-CONTENT)，转载请署名、注明出处，不得用于商业用途，改编后须以相同协议发布

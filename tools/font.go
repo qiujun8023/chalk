@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-// 状态栏字库直接取自 slate 固件用的 LVGL 字体（tools/fonts/*.c，lv_font_conv 生成，1bpp、未压缩）：
+// 字库源是 Zfull 的 LVGL 点阵字体（tools/fonts/*.c，lv_font_conv 生成，1bpp、未压缩）：
 // Zfull 16px 标题、Zfull 12px 数字。只收录用到的字符，转成固件 ui/font.cc 读的格式（小端）：
 //
 //	"CFN1" | u8 行高 | u8 基线 | u16 字数 | 字数 × {u32 码点, u8 步进, u8 宽, u8 高, i8 x, i8 y(距行顶), u32 偏移}

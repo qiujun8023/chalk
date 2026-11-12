@@ -38,7 +38,7 @@ type tts struct {
 	used     map[string]bool // 本次构建用到的缓存文件，prune 时保留
 }
 
-// 用 OpenAI 兼容的流式 chat/completions 接口合成（与 slate 相同，默认小米 MiMo、音色冰糖）。
+// 用 OpenAI 兼容的流式 chat/completions 接口合成（默认小米 MiMo、音色冰糖）。
 // key 取 TTS_API_KEY，没有时取 CHALK_TTS_API_KEY（~/.config/secrets/env 里的名字）；缓存命中时不需要。
 func newTTS(cacheDir string) *tts {
 	return &tts{

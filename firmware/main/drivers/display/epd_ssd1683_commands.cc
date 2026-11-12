@@ -96,10 +96,9 @@ void EpdSsd1683::EpdDisplayPartial() {
     // 发 0xE0 0xE6 会把 SSD1683 切回 boost-charge 状态,partial LUT 失效,
     // 屏幕看起来"日志在刷但完全没变化"。booster 在上一轮 FULL 路径的
     // ApplyTemperatureBoost + EpdInit 时已经设好,partial 复用即可。
-    // 参考 esp32-eink/.../custom_lcd_display.cc:1135 EPD_DisplayPart 同样不写 booster。
 
     EpdSendCommand(0x10);
-    ReadBusy();  // 跟参考实现对齐:0x10 之后等 BUSY 回 HIGH
+    ReadBusy();  // 0x10 之后等 BUSY 回 HIGH
     for (int y = 0; y < kHeight; ++y) {
         const uint8_t* prev = prev_snapshot_ + y * bpr;
         const uint8_t* now  = snapshot_ + y * bpr;
@@ -120,7 +119,6 @@ void EpdSsd1683::EpdTurnOnDisplay() {
     EpdSendCommand(0x02);  // power off (controller internal)
     EpdSendData(0x00);
     ReadBusy();
-    // 跟参考实现对齐:每次刷完屏都断 GPIO6,跟刷新前的 EpdInit() 内 EpdPowerOn 配对。
-    // 见 esp32-eink/main/boards/zectrix-s3-epaper-4.2/custom_lcd_display.cc:826。
+    // 每次刷完屏都断 EPD 电源(GPIO6),和刷新前 EpdInit() 里的 EpdPowerOn 配对。
     EpdPowerOff();
 }

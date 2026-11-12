@@ -14,7 +14,7 @@ import (
 const (
 	screenW = 400
 	screenH = 300
-	// 源图缩小后灰度低于这个值算黑，与 slate 线上的 threshold 模式一致。
+	// 源图缩小后灰度低于这个值算黑。
 	blackThreshold = 128
 	// 裁白边时，灰度低于这个值算内容。
 	trimThreshold = 248

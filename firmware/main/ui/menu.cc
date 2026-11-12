@@ -87,7 +87,7 @@ void DrawList(uint8_t* fb, const BitmapFont& font, const std::vector<Row>& rows,
         font.Draw(fb, vx, y + text_dy, row.value, false);
     }
 
-    // 滚动条：只有一屏放不下时才画；只画滑块不画轨道（与 slate 相同），长度对应可见比例，位置对应视口。
+    // 滚动条：只有一屏放不下时才画；只画滑块不画轨道，长度对应可见比例，位置对应视口。
     if (n > visible) {
         const int track_x = kW - 8, track_h = layout.bottom - layout.top;
         const int th      = std::max(8, track_h * visible / n);
