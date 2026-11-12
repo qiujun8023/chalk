@@ -2,13 +2,15 @@ type: story
 title: 风
 author: 李峤
 pages:
-  - image: p01.png
-    say: 解落三秋叶。
-  - image: p02.png
-    say: 能开二月花。
-  - image: p03.png
-    say: 过江千尺浪。
-  - image: p04.png
-    say: 入竹万竿斜。
-  - image: p05.png
-    say: 解落三秋叶，能开二月花。过江千尺浪，入竹万竿斜。
+  - say: 解落三秋叶。
+    art:
+      ref: stories/rainy-day/p01.png
+      prompt: 秋天，一阵风吹过大树，树叶纷纷飘落，画几道弯弯的风线
+  - say: 能开二月花。
+    art: 春天，一阵风吹过树枝，枝头的花一朵一朵开了，画几道弯弯的风线
+  - say: 过江千尺浪。
+    art: 风吹过宽宽的江面，江上掀起高高的浪花
+  - say: 入竹万竿斜。
+    art: 风吹进一片竹林，竹子全都被吹得斜向一边
+  - say: 解落三秋叶，能开二月花。过江千尺浪，入竹万竿斜。
+    art: 全景：一个小朋友站在江边的山坡上，风吹起他的衣角，江上有浪花，旁边一片竹林被吹斜

@@ -1,6 +1,7 @@
-// chalk 把 content/ 下的源内容（线稿、文案）编译成设备可直接读取的内容镜像。
+// chalk 把 content/ 下的源内容（线稿、文案、朗读）编译成设备可直接读取的内容镜像。
 //
-//	go run . build                          生成 build/fs、build/storage.bin 和 build/preview
+//	go run . gen [--redo|--lock] [路径…]    用 AI 生成缺失或过期的插图和朗读，记入各目录的 gen.lock
+//	go run . build                          生成 build/fs、build/storage.bin 和 build/preview；不调 AI
 //	go run . region <base> <frame> <out>    建议关键帧的 region，并输出标注图
 package main
 
@@ -17,31 +18,31 @@ func main() {
 		}
 		return
 	}
-	if len(os.Args) < 2 || os.Args[1] != "build" {
-		fmt.Fprintln(os.Stderr, "usage: chalk build | chalk region <base.png> <frame.png> <out.png>")
+	if len(os.Args) < 2 || (os.Args[1] != "build" && os.Args[1] != "gen") {
+		fmt.Fprintln(os.Stderr, "usage: chalk gen [--redo|--lock] [路径…] | chalk build | chalk region <base.png> <frame.png> <out.png>")
 		os.Exit(2)
 	}
 	root, err := repoRoot()
 	if err != nil {
 		fatal(err)
 	}
+	if os.Args[1] == "gen" {
+		if err := runGen(root, os.Args[2:]); err != nil {
+			fatal(err)
+		}
+		return
+	}
 	buildDir := filepath.Join(root, "build")
 	b := &builder{
 		content: filepath.Join(root, "content"),
 		fsDir:   filepath.Join(buildDir, "fs"),
 		preview: filepath.Join(buildDir, "preview"),
-		tts:     newTTS(filepath.Join(root, "content", "tts")),
 	}
 	if err := b.build(); err != nil {
 		fatal(err)
 	}
 	if err := buildImage(buildDir, b.fsDir, filepath.Join(root, "firmware", "partitions.csv")); err != nil {
 		fatal(err)
-	}
-	if n, err := b.tts.prune(); err != nil {
-		fatal(err)
-	} else if n > 0 {
-		fmt.Printf("tts cache: removed %d unused files\n", n)
 	}
 }
 

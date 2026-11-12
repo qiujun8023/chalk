@@ -6,6 +6,9 @@ figures:
   - id: excavator
     name: 挖掘机
     intro: 挖掘机，挖呀挖。轰隆隆！
+    art:
+      k1.png: 挖掘机的斗杆向下放低，挖斗插进地面下的土里，地面画一条横线并在挖斗旁边有几块土块
+      k2.png: 挖掘机的动臂和斗杆抬高，挖斗向内收起并装满土，挖斗上方堆着几块土块
     frames:
       - {image: k1.png, region: [0, 40, 690, 1046], ms: 400}
       - {image: k2.png, region: [0, 0, 690, 1000], ms: 400}
@@ -13,6 +16,9 @@ figures:
   - id: loader
     name: 铲车
     intro: 铲车铲沙子。哐当！
+    art:
+      k1.png: 铲车前面的铲斗贴地放低，铲斗里装满一堆沙土
+      k2.png: 铲车前面的铲斗举高到车顶附近，铲斗里装满一堆沙土
     frames:
       - {image: k1.png, region: [24, 528, 360, 384], ms: 400}
       - {image: k2.png, region: [0, 0, 620, 980], ms: 400}
@@ -20,6 +26,9 @@ figures:
   - id: dump-truck
     name: 翻斗车
     intro: 翻斗车，倒泥土。哗啦！
+    art:
+      k1.png: 翻斗车后面的车斗放下来、水平地平放在车架上，车斗里装满一堆泥土，泥土高出车斗边缘，液压杆缩回
+      k2.png: 翻斗车后面的车斗以后端为轴向上倾斜抬起约 40 度，车斗后方有一堆泥土倾泻落到地上
     frames:
       - {image: k1.png, region: [528, 0, 920, 912], ms: 600}
       - {image: base.png, ms: 200}
@@ -28,6 +37,9 @@ figures:
   - id: cement-mixer
     name: 水泥车
     intro: 水泥车，转一转。咕噜噜！
+    art:
+      k1.png: 水泥罐车的罐身表面画上 3 条斜向的螺旋条纹
+      k2.png: 水泥罐车的罐身表面画上 3 条斜向的螺旋条纹，条纹位置相对上一种整体沿罐身平移半个间距，看起来罐在转动
     frames:
       - {image: k1.png, region: [540, 100, 880, 560], ms: 200}
       - {image: k2.png, region: [540, 100, 880, 560], ms: 200}
@@ -36,6 +48,9 @@ figures:
   - id: crane
     name: 吊车
     intro: 吊车吊得高。吱呀——！
+    art:
+      k1.png: 吊车的吊钩和吊绳向下放长，吊钩下降到靠近地面的位置
+      k2.png: 吊车的吊钩挂着一个方形箱子，吊钩和箱子升到吊臂末端下方较高的位置
     frames:
       - {image: k1.png, region: [40, 40, 150, 1046], ms: 400}
       - {image: k2.png, region: [0, 120, 330, 540], ms: 800}
@@ -43,6 +58,8 @@ figures:
   - id: sprinkler-truck
     name: 洒水车
     intro: 洒水车，洒洒水。哗——！
+    art:
+      k2.png: 洒水车车头下方的喷水口向前下方喷出扇形的水花，由几条弯曲短线和若干小水滴组成，地面上有两三条水渍线
     frames:
       - {image: k2.png, region: [0, 540, 460, 546], ms: 400}
       - {image: base.png, ms: 300}
@@ -51,6 +68,9 @@ figures:
   - id: garbage-truck
     name: 垃圾车
     intro: 垃圾车，吃垃圾。咕噜！
+    art:
+      k1.png: 垃圾车后部的车厢后门向上掀开，后门下方露出车厢口
+      k2.png: 垃圾车后部的车厢后门向上掀开，一个垃圾桶被举到车厢口上方倒出几袋垃圾
     frames:
       - {image: k1.png, region: [1032, 24, 416, 840], ms: 400}
       - {image: k2.png, region: [980, 0, 468, 900], ms: 800}
@@ -58,6 +78,9 @@ figures:
   - id: fire-truck
     name: 消防车
     intro: 消防车救火啦！呜——！
+    art:
+      k1.png: 消防车的水枪（或水炮）喷出一道向前上方的弧形水柱，水柱末端有几滴水珠
+      k2.png: 消防车的水枪喷出更长更远的弧形水柱，末端溅起一大片水花和水珠
     frames:
       - {image: k1.png, region: [0, 0, 336, 192], ms: 400}
       - {image: k2.png, region: [0, 0, 336, 528], ms: 800}
@@ -65,6 +88,8 @@ figures:
   - id: ambulance
     name: 救护车
     intro: 救护车，去医院。嘀嘟嘀嘟！
+    art:
+      k1.png: 车顶的警示灯亮起：灯内部涂成实心黑色，灯的左右两侧各向外放射 2 到 3 条粗短的黑色光线
     frames:
       - {image: k1.png, region: [312, 72, 576, 288], ms: 300}
       - {image: base.png, ms: 300}
@@ -73,6 +98,9 @@ figures:
   - id: police-car
     name: 警车
     intro: 警察警察，让一让！呜哇呜哇！
+    art:
+      k1.png: 车顶警灯亮起：警灯内部涂成实心黑色，警灯左右两侧各向外放射 2 到 3 条粗短的黑色光线
+      k2.png: 车顶警灯保持空心不涂黑，但警灯正上方向上放射 3 条粗短的黑色光线
     frames:
       - {image: k1.png, region: [552, 120, 480, 192], ms: 200}
       - {image: k2.png, region: [552, 72, 480, 240], ms: 200}
@@ -81,12 +109,17 @@ figures:
   - id: bus
     name: 巴士
     intro: 巴士，到站啦。叮咚！
+    art:
+      k1.png: 巴士中间的车门向两侧打开，门洞里露出空白
     frames:
       - {image: k1.png, region: [1032, 384, 192, 360], ms: 1200}
       - {image: base.png}
   - id: taxi
     name: 出租车
     intro: 出租车，请上车。嘀！
+    art:
+      k1.png: 出租车车顶的顶灯亮起：顶灯内部涂成实心黑色，顶灯上方放射 3 条粗短的黑色光线
+      k2.png: 出租车车头前方的大灯射出 3 条向前的黑色光线
     frames:
       - {image: k1.png, region: [680, 40, 280, 230], ms: 400}
       - {image: k2.png, region: [0, 500, 100, 172], ms: 400}

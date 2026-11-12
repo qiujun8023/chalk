@@ -2,13 +2,15 @@ type: story
 title: 寻隐者不遇
 author: 贾岛
 pages:
-  - image: p01.png
-    say: 松下问童子。
-  - image: p02.png
-    say: 言师采药去。
-  - image: p03.png
-    say: 只在此山中。
-  - image: p04.png
-    say: 云深不知处。
-  - image: p05.png
-    say: 松下问童子，言师采药去。只在此山中，云深不知处。
+  - say: 松下问童子。
+    art:
+      ref: stories/rainy-day/p01.png
+      prompt: 一棵大松树下，一位背着包袱的古代老爷爷弯下腰，问一个扎发髻的小童子
+  - say: 言师采药去。
+    art: 那个小童子伸手指向远处的大山，山上画着一个背药篓的小小身影
+  - say: 只在此山中。
+    art: 一座高高的大山，山上有弯弯的小路和几棵松树
+  - say: 云深不知处。
+    art: 大山的半山腰被厚厚的云朵挡住了，看不见小路
+  - say: 松下问童子，言师采药去。只在此山中，云深不知处。
+    art: 全景：大松树下，那位老爷爷和小童子望着远处被云朵遮住的大山

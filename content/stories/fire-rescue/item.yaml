@@ -1,17 +1,31 @@
 type: story
 title: 消防车救小猫
 pages:
-  - image: p01.png
-    say: 小猫爬上了高高的大树，下不来啦。喵——喵——
-  - image: p02.png
-    say: 消防车听到了，呜——呜——，开过来啦！
-  - image: p03.png
-    say: 消防车停在树下，把长长的梯子升起来。
-  - image: p04.png
-    say: 消防员叔叔爬上梯子，轻轻抱住了小猫。
-  - image: p05.png
-    say: 消防员叔叔抱着小猫，一步一步爬下梯子。
-  - image: p06.png
-    say: 小猫安全下来啦！谢谢你，消防车！
-  - image: p07.png
-    say: 消防车开回家，小猫挥挥爪子说：再见！
+  - say: 小猫爬上了高高的大树，下不来啦。喵——喵——
+    art:
+      ref: vehicles/fire-truck/base.png
+      prompt: 一棵高高的大树，树枝上趴着一只圆脸的小猫，小猫睁大眼睛向下看，头上有两个表示叫声的小符号，地面一条横线。不要画车辆
+  - say: 消防车听到了，呜——呜——，开过来啦！
+    art:
+      ref: vehicles/fire-truck/base.png
+      prompt: 参考图里的这辆消防车向右开来，车轮后面有几条表示速度的短线，车顶警灯旁画两三条光线，远处是那棵树和树上的小猫
+  - say: 消防车停在树下，把长长的梯子升起来。
+    art:
+      ref: vehicles/fire-truck/base.png
+      prompt: 参考图里的这辆消防车停在大树下，车顶的长梯子斜着升起来靠在树枝上，树上趴着那只小猫
+  - say: 消防员叔叔爬上梯子，轻轻抱住了小猫。
+    art:
+      ref: vehicles/fire-truck/base.png
+      prompt: 参考图里的这辆消防车完整地停在画面左下方，车顶的长梯子斜着升起来，梯子顶端靠在画面右上方大树的树枝上；一位戴头盔的消防员站在梯子上部，双手抱着一只圆脸小猫。消防车、梯子和大树都要完整地画在画面里
+  - say: 消防员叔叔抱着小猫，一步一步爬下梯子。
+    art:
+      ref: vehicles/fire-truck/base.png
+      prompt: 参考图里的这辆消防车完整地停在画面左下方，车顶的长梯子斜靠在右边的大树上；一位戴头盔的消防员一只手抱着圆脸小猫，另一只手扶着梯子，正一步一步往下爬，已经爬到梯子中间
+  - say: 小猫安全下来啦！谢谢你，消防车！
+    art:
+      ref: vehicles/fire-truck/base.png
+      prompt: 那只小猫站在地上开心地笑，消防员蹲在旁边摸它的头，后面停着参考图里的消防车，空中有两颗小爱心
+  - say: 消防车开回家，小猫挥挥爪子说：再见！
+    art:
+      ref: vehicles/fire-truck/base.png
+      prompt: 参考图里的消防车向左开走，那只小猫站在路边举起一只爪子挥手，天上有一朵云

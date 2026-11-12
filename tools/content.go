@@ -15,6 +15,7 @@ type librarySrc struct {
 }
 
 type groupSrc struct {
+	ID    string   `yaml:"id"` // 组名朗读存为 content/groups/<id>.ogg
 	Title string   `yaml:"title"`
 	Items []string `yaml:"items"` // content/ 下含 item.yaml 的目录；figures 类型的项展开成其中的每一个形象
 }
@@ -28,17 +29,47 @@ type itemSrc struct {
 	Figures []figureSrc `yaml:"figures"`
 }
 
+// 第 i 页（从 1 起）的插图是 p<i>.png，旁白是 p<i>.ogg。
 type pageSrc struct {
-	Image string `yaml:"image"`
-	Say   string `yaml:"say"` // 旁白
+	Say string   `yaml:"say"` // 旁白
+	Art *artSpec `yaml:"art"` // 插图的生成描述；缺省表示插图是手工提供的
 }
 
 // 一个形象（一辆车、一只动物）：原图 + 介绍 + 一段关键帧动画。
 type figureSrc struct {
-	ID     string     `yaml:"id"` // 子目录名
-	Name   string     `yaml:"name"`
-	Intro  string     `yaml:"intro"`
-	Frames []frameSrc `yaml:"frames"`
+	ID    string `yaml:"id"` // 子目录名
+	Name  string `yaml:"name"`
+	Intro string `yaml:"intro"` // 朗读存为 <id>/intro.ogg
+	// 形象目录里各张图的生成描述，键是文件名：base.png 画原图，其余在 base.png 上改出关键帧。没列出的图是手工提供的。
+	Art    map[string]artSpec `yaml:"art"`
+	Frames []frameSrc         `yaml:"frames"`
+}
+
+// artSpec 是一张图的生成描述：只写字符串时是 prompt，参考图取缺省值。
+type artSpec struct {
+	// 参考图：不含「/」时相对图片所在目录，否则相对 content/。
+	// 缺省时故事页取本目录的 p01.png，形象关键帧取 base.png；故事第 1 页和形象原图必须写。
+	Ref    string `yaml:"ref"`
+	Prompt string `yaml:"prompt"`
+}
+
+func (a *artSpec) UnmarshalYAML(n *yaml.Node) error {
+	if n.Kind == yaml.ScalarNode {
+		a.Prompt = n.Value
+		return nil
+	}
+	type plain artSpec
+	var p plain
+	if err := n.Decode(&p); err != nil {
+		return err
+	}
+	for i := 0; i < len(n.Content); i += 2 {
+		if k := n.Content[i].Value; k != "ref" && k != "prompt" {
+			return fmt.Errorf("line %d: art 未知字段 %q", n.Content[i].Line, k)
+		}
+	}
+	*a = artSpec(p)
+	return nil
 }
 
 type frameSrc struct {

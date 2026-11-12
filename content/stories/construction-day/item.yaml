@@ -1,19 +1,35 @@
 type: story
 title: 工地的一天
 pages:
-  - image: p01.png
-    say: 清晨，太阳出来了，工地上静悄悄的。
-  - image: p02.png
-    say: 挖掘机第一个来上班，挖呀挖，挖出一个大坑。
-  - image: p03.png
-    say: 翻斗车装满泥土，轰隆隆地运走啦。
-  - image: p04.png
-    say: 铲车推呀推，把沙子推得平平的。
-  - image: p05.png
-    say: 水泥罐车转呀转，把水泥倒进坑里。
-  - image: p06.png
-    say: 吊车伸长手臂，把钢梁吊得高高的。
-  - image: p07.png
-    say: 大家一起忙了好多天，新房子盖好啦！
-  - image: p08.png
-    say: 天黑了，工程车们排好队，晚安！
+  - say: 清晨，太阳出来了，工地上静悄悄的。
+    art:
+      ref: vehicles/excavator/base.png
+      prompt: 清晨的工地：画面左上角一个带几条光线的太阳，地面一条横线，工地四周一排简单的围栏，画面中间是一块空地，远处有两三个路锥。不要画任何车辆
+  - say: 挖掘机第一个来上班，挖呀挖，挖出一个大坑。
+    art:
+      ref: vehicles/excavator/base.png
+      prompt: 参考图里的这台挖掘机站在地面上，挖斗伸进前方地面上挖出的一个大坑里。坑画成地面线下方的半圆形凹坑，坑壁有几道泥土纹理；坑的另一侧堆着一座小土堆，土堆表面画几颗小石子和颗粒，土堆不能画成云朵的形状，天上不要画云
+  - say: 翻斗车装满泥土，轰隆隆地运走啦。
+    art:
+      ref: vehicles/dump-truck/base.png
+      prompt: 参考图里的这辆翻斗车装满一车斗泥土往前开，车轮后面有几条表示速度的短线
+  - say: 铲车推呀推，把沙子推得平平的。
+    art:
+      ref: vehicles/loader/base.png
+      prompt: 参考图里的这台铲车用铲斗把地上的沙子推平，铲斗前面有一小堆沙子
+  - say: 水泥罐车转呀转，把水泥倒进坑里。
+    art:
+      ref: vehicles/cement-mixer/base.png
+      prompt: 参考图里的这辆水泥罐车停在一个方形大坑旁边，罐车尾部的溜槽把水泥倒进坑里
+  - say: 吊车伸长手臂，把钢梁吊得高高的。
+    art:
+      ref: vehicles/crane/base.png
+      prompt: 参考图里的这台吊车用吊钩吊起一根长长的工字钢梁，钢梁悬在半空，旁边是只盖了一半的房子框架
+  - say: 大家一起忙了好多天，新房子盖好啦！
+    art:
+      ref: vehicles/excavator/base.png
+      prompt: 一座刚盖好的两层小房子，有门、窗户和尖屋顶，房子前面的地上并排停着缩小的挖掘机和翻斗车，天上有两朵云
+  - say: 天黑了，工程车们排好队，晚安！
+    art:
+      ref: vehicles/crane/base.png
+      prompt: 夜晚：画面右上角一弯月亮和几颗星星，地面上从左到右排队停着缩小的吊车、挖掘机和翻斗车，车灯都关着

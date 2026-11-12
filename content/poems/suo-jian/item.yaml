@@ -2,13 +2,15 @@ type: story
 title: 所见
 author: 袁枚
 pages:
-  - image: p01.png
-    say: 牧童骑黄牛。
-  - image: p02.png
-    say: 歌声振林樾。
-  - image: p03.png
-    say: 意欲捕鸣蝉。
-  - image: p04.png
-    say: 忽然闭口立。
-  - image: p05.png
-    say: 牧童骑黄牛，歌声振林樾。意欲捕鸣蝉，忽然闭口立。
+  - say: 牧童骑黄牛。
+    art:
+      ref: stories/rainy-day/p01.png
+      prompt: 一个戴草帽的小牧童骑在一头大黄牛的背上，走在树林边的小路上
+  - say: 歌声振林樾。
+    art: 那个小牧童张开嘴唱歌，几个小音符飘向树林
+  - say: 意欲捕鸣蝉。
+    art: 那个小牧童看见树干上趴着一只蝉，伸出手想去捉
+  - say: 忽然闭口立。
+    art: 那个小牧童闭上嘴巴，在牛背上一动不动，竖起一根手指放在嘴边
+  - say: 牧童骑黄牛，歌声振林樾。意欲捕鸣蝉，忽然闭口立。
+    art: 全景：树林边，那个小牧童骑着大黄牛，抬头悄悄看着树上的蝉

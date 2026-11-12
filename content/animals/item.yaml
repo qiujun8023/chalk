@@ -6,6 +6,12 @@ figures:
   - id: cat
     name: 小猫
     intro: 小花猫，喵喵叫。喵——！
+    art:
+      base.png:
+        ref: vehicles/bus/base.png
+        prompt: 一只圆脸大眼睛的小猫，四脚站立，身体朝右，长尾巴在身后向上翘起，嘴巴闭着
+      k1.png: 小猫张开小嘴在叫，嘴边向外画 2 到 3 条短弧线表示叫声；尾巴不变
+      k2.png: 小猫的尾巴向另一侧弯过去，尾巴尖卷成一个小钩；嘴巴闭着，头和身体不变
     frames:
       - {image: k1.png, region: [1177, 426, 202, 154], ms: 600}
       - {image: k2.png, region: [84, 41, 590, 563], ms: 500}
@@ -13,6 +19,12 @@ figures:
   - id: dog
     name: 小狗
     intro: 小狗摇尾巴。汪汪！
+    art:
+      base.png:
+        ref: vehicles/bus/base.png
+        prompt: 一只圆脸垂耳朵的小狗，四脚站立，身体朝右，短尾巴在身后向上翘起，嘴巴闭着
+      k1.png: 小狗的尾巴向左歪，尾巴旁边画 2 条表示摇动的短弧线；头和身体不变
+      k2.png: 小狗的尾巴向右歪，尾巴旁边画 2 条表示摇动的短弧线，同时小狗张嘴叫，嘴边画 2 到 3 条短弧线表示叫声
     frames:
       - {image: k1.png, region: [74, 309, 266, 233], ms: 300}
       - {image: k2.png, region: [194, 249, 1219, 324], ms: 300}
@@ -22,12 +34,23 @@ figures:
   - id: rooster
     name: 大公鸡
     intro: 大公鸡，早早起。喔喔喔！
+    art:
+      base.png:
+        ref: vehicles/bus/base.png
+        prompt: 一只大公鸡，站立，身体朝右，头上有大鸡冠，尾巴羽毛高高翘起，嘴巴闭着
+      k1.png: 公鸡抬头张开尖嘴打鸣，嘴巴前方向外放射 3 条短弧线表示叫声；身体和尾巴不变
     frames:
       - {image: k1.png, region: [731, 0, 626, 617], ms: 1000}
       - {image: base.png}
   - id: duck
     name: 小鸭子
     intro: 小鸭子，游呀游。嘎嘎！
+    art:
+      base.png:
+        ref: vehicles/bus/base.png
+        prompt: 一只圆滚滚的小黄鸭，浮在水面上，身体朝右，翅膀收在身体两侧，身体下方画两三条波浪线表示水面
+      k1.png: 小鸭子张开两只翅膀向上扬起，嘴巴张开，嘴边画 2 条短弧线表示嘎嘎叫；水面波浪线不变
+      k2.png: 小鸭子翅膀收回身体两侧，水面上多画几圈向外扩散的波纹
     frames:
       - {image: k1.png, region: [268, 92, 1114, 777], ms: 500}
       - {image: base.png, ms: 200}
@@ -36,6 +59,11 @@ figures:
   - id: frog
     name: 小青蛙
     intro: 小青蛙，呱呱叫。呱呱！
+    art:
+      base.png:
+        ref: vehicles/bus/base.png
+        prompt: 一只圆眼睛的小青蛙，蹲坐在一片大荷叶上，身体朝右，嘴巴闭着
+      k1.png: 小青蛙下巴下面鼓起一个大大的圆泡泡（鸣囊），嘴边画 2 到 3 条短弧线表示呱呱叫；荷叶不变
     frames:
       - {image: k1.png, region: [972, 244, 395, 441], ms: 400}
       - {image: base.png, ms: 200}
@@ -44,6 +72,12 @@ figures:
   - id: elephant
     name: 大象
     intro: 大象鼻子长，喷喷水。噗——！
+    art:
+      base.png:
+        ref: vehicles/bus/base.png
+        prompt: 一只圆滚滚的小象，四脚站立，身体朝右，大耳朵，长鼻子自然垂下来，嘴巴微笑
+      k1.png: 小象把长鼻子向上高高举起，鼻子尖朝上；身体、耳朵和腿不变
+      k2.png: 小象鼻子向上高高举起，从鼻子尖喷出一道向上的水柱，水柱顶端散开成水花和几滴水珠；身体、耳朵和腿不变
     frames:
       - {image: k1.png, region: [1073, 7, 346, 945], ms: 400}
       - {image: k2.png, region: [1073, 0, 375, 952], ms: 1000}
@@ -51,6 +85,12 @@ figures:
   - id: bird
     name: 小鸟
     intro: 小鸟拍翅膀。叽叽喳喳！
+    art:
+      base.png:
+        ref: vehicles/bus/base.png
+        prompt: 一只圆滚滚的小鸟，站在一根横着的树枝上，身体朝右，翅膀收在身体两侧，尖嘴闭着
+      k1.png: 小鸟张开两只翅膀向上扬起，尖嘴张开，嘴边画 2 条短弧线表示叽叽喳喳的叫声；树枝不变
+      k2.png: 小鸟两只翅膀向下展开，尖嘴闭着；树枝不变
     frames:
       - {image: k1.png, region: [278, 26, 1098, 715], ms: 300}
       - {image: k2.png, region: [278, 26, 1098, 844], ms: 300}
@@ -59,6 +99,12 @@ figures:
   - id: rabbit
     name: 小白兔
     intro: 小白兔，吃萝卜。咔嚓咔嚓！
+    art:
+      base.png:
+        ref: vehicles/bus/base.png
+        prompt: 一只长耳朵的小白兔，坐着，身体朝右，两只前爪捧着一根带叶子的胡萝卜送到嘴边
+      k1.png: 胡萝卜的尖端被咬掉一小口，缺口处呈锯齿形，嘴边有两三个小碎屑；兔子其余部分不变
+      k2.png: 胡萝卜被咬掉一大半，只剩带叶子的一小段，嘴边有两三个小碎屑，兔子的脸颊鼓起；兔子其余部分不变
     frames:
       - {image: k1.png, region: [821, 478, 143, 128], ms: 600}
       - {image: k2.png, region: [804, 464, 346, 277], ms: 800}
@@ -66,6 +112,12 @@ figures:
   - id: fish
     name: 小鱼
     intro: 小鱼吐泡泡。咕噜咕噜！
+    art:
+      base.png:
+        ref: vehicles/bus/base.png
+        prompt: 一只圆滚滚的小鱼，身体朝右，大眼睛，嘴巴是一个小圆圈，尾巴像扇子
+      k1.png: 小鱼嘴巴前上方画 2 个小圆圈泡泡；小鱼本身不变
+      k2.png: 小鱼嘴巴前上方画 4 个由小到大、越往上越大的圆圈泡泡；小鱼本身不变
     frames:
       - {image: k1.png, region: [1191, 49, 252, 467], ms: 500}
       - {image: k2.png, region: [1191, 49, 252, 467], ms: 800}
@@ -73,12 +125,22 @@ figures:
   - id: lion
     name: 大狮子
     intro: 大狮子，吼一吼。嗷呜——！
+    art:
+      base.png:
+        ref: vehicles/bus/base.png
+        prompt: 一只大狮子，四脚站立，身体朝右，头上一圈蓬松的鬃毛，长尾巴末端有一撮毛，嘴巴闭着
+      k1.png: 狮子张大嘴巴吼叫，露出几颗尖牙，嘴巴前方向外放射 3 条粗短弧线表示吼声；鬃毛、身体和尾巴不变
     frames:
       - {image: k1.png, region: [1063, 375, 385, 301], ms: 1000}
       - {image: base.png}
   - id: pig
     name: 小猪
     intro: 小猪胖嘟嘟。哼哼！
+    art:
+      base.png:
+        ref: vehicles/bus/base.png
+        prompt: 一只圆滚滚的小猪，四脚站立，身体朝右，大鼻子上有两个鼻孔，卷卷的小尾巴，嘴巴微笑
+      k1.png: 小猪的鼻子向上拱起，鼻子前方画 2 到 3 条短弧线表示哼哼声，两只耳朵向上竖起；身体和尾巴不变
     frames:
       - {image: k1.png, region: [559, 1, 873, 629], ms: 400}
       - {image: base.png, ms: 200}
@@ -87,6 +149,12 @@ figures:
   - id: cow
     name: 奶牛
     intro: 大奶牛，甩尾巴。哞——！
+    art:
+      base.png:
+        ref: vehicles/bus/base.png
+        prompt: 一只奶牛，四脚站立，身体朝右，身上有几块大斑点（斑点只画轮廓不涂黑），头上两只小角，长尾巴垂下，嘴巴闭着
+      k1.png: 奶牛抬头张开嘴巴叫，嘴巴前方向外放射 3 条短弧线表示哞哞声；身体和斑点不变
+      k2.png: 奶牛嘴巴闭着，长尾巴向侧面甩起来，尾巴旁边画 2 条表示甩动的短弧线；身体和斑点不变
     frames:
       - {image: k1.png, region: [783, 5, 651, 571], ms: 800}
       - {image: k2.png, region: [12, 22, 259, 845], ms: 500}

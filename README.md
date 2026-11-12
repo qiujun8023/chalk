@@ -95,8 +95,8 @@ Chalk（粉笔）是跑在 ZecTrix Note4（ESP32-S3 + 4.2" 400×300 黑白墨水
 | 目录 | 内容 |
 | --- | --- |
 | `firmware/` | ESP-IDF 5.5 固件 |
-| `tools/` | Go 内容编译器 `chalk`、字库源（`fonts/`，Zfull 的 LVGL 点阵）、Codex 生图脚本（`art/`）、串口调试脚本 |
-| `content/` | 源内容：线稿、关键帧、文案，以及合成好的朗读音频（`tts/`） |
+| `tools/` | Go 内容工具 `chalk`（生成插图和朗读、编译内容镜像）、字库源（`fonts/`，Zfull 的 LVGL 点阵）、串口调试脚本 |
+| `content/` | 内容：文案和画面描述（`item.yaml`），以及生成好的插图、关键帧、朗读音频 |
 | `docs/images/` | README 配图：设备样机和宣传图 |
 | `.github/workflows/` | CI：构建内容和固件，推 tag 时发布整片镜像 |
 | `build/` | 编译产物（不入库）：`fs/`、`storage.bin`、`preview/`、生图日志 `art-logs/` |
@@ -113,7 +113,7 @@ uvx esptool --chip esp32s3 write_flash 0x0 chalk-<版本>.bin
 
 ## 构建与烧录
 
-需要 Go、ffmpeg（带 libopus）、uv（打包镜像时用 `uvx` 运行固定版本的 littlefs-python）、ESP-IDF 5.5。朗读音频已在仓库里，没改朗读文案时不需要 TTS key。
+需要 Go、ffmpeg（带 libopus）、uv（打包镜像时用 `uvx` 运行固定版本的 littlefs-python）、ESP-IDF 5.5。插图和朗读都已在仓库里，`chalk build` 不调 AI、不需要 key。
 
 ```bash
 cd tools && go build -o chalk . && ./chalk build
@@ -124,73 +124,86 @@ cd ../firmware && idf.py -p /dev/cu.usbmodem2101 flash
 - 重新烧内容镜像会清掉设备上保存的位置和音量。
 - `build/preview/` 里有每一帧的 PNG 和每个形象的动画 `anim.gif`，不用烧录就能检查效果。
 - storage 分区大小从 `firmware/partitions.csv` 读取。
-- 推送 `v*` tag 后，CI 构建并把整片镜像（`idf.py merge-bin`）发布到同名 Release；CI 不配 TTS key，`content/tts/` 缺音频时构建失败。
+- 推送 `v*` tag 后，CI 构建并把整片镜像（`idf.py merge-bin`）发布到同名 Release；生成文件缺失或过期时 CI 构建失败。
 
-### TTS
+### 生成插图和朗读
 
-朗读用 OpenAI 兼容的流式 `chat/completions` 接口合成，改了朗读文案后需要 key：`set -a; . ~/.config/secrets/env; set +a` 提供 `CHALK_TTS_API_KEY`。
+插图、关键帧和朗读都由 AI 生成后入库，生成和构建分开：`chalk gen` 调 AI 补齐缺失或过期的文件，`chalk build` 只检查并编译。
+
+```bash
+set -a; . ~/.config/secrets/env; set +a   # 提供 CHALK_TTS_API_KEY
+tools/chalk gen                           # 生成全部缺失或过期的文件
+tools/chalk gen poems/jing-ye-si          # 只处理某一项；路径相对 content/，可以是目录或文件
+tools/chalk gen --redo poems/jing-ye-si/p03.ogg   # 不满意，重新生成
+tools/chalk gen --lock stories/rainy-day/p01.png  # 手工改过图，接受当前文件
+tools/chalk region base.png k1.png out.png        # 建议关键帧的 region，并输出标注图
+```
+
+- 每个内容目录的 `gen.lock` 记录其中各文件生成时的输入 hash。朗读的输入是文本和音色，插图的输入是画面描述和参考图；输入变了即过期，`chalk build` 报错，`chalk gen` 重新生成。
+- 同目录的参考图（故事第 1 页、形象原图）是依赖：它重新生成后，引用它的图跟着过期。跨目录的参考图只借画风，不形成依赖。
+- 内容里删掉的项或页，`chalk gen` 会删掉对应的生成文件。
+- 插图用 Codex 的图像生成，并发数 `JOBS` 默认 6，日志在 `build/gen-logs/`。没写 `art` 的图是手工提供的（车辆原图），不参与生成。
+
+朗读用 OpenAI 兼容的流式 `chat/completions` 接口合成，统一转成 24 kHz 单声道 32 kbps 的 Ogg Opus。
 
 | 变量 | 默认 |
 | --- | --- |
-| `TTS_API_KEY` | 没有时取 `CHALK_TTS_API_KEY`；两者都没有且缓存未命中时报错 |
+| `TTS_API_KEY` | 没有时取 `CHALK_TTS_API_KEY` |
 | `TTS_BASE_URL` | `https://api.xiaomimimo.com/v1` |
 | `TTS_MODEL` | `mimo-v2.5-tts` |
 | `TTS_VOICE` | `冰糖` |
 
-合成结果按音色和文本存在 `content/tts/` 并入库，每次构建结束删掉这次没用到的文件。音频统一转成 24 kHz 单声道 32 kbps 的 Ogg Opus。
-
 ## 内容格式
 
-`content/library.yaml` 列出各组和组内的项，每项是 `content/` 下含 `item.yaml` 的目录：车辆在 `vehicles/`，动物在 `animals/`，故事在 `stories/<名称>/`，古诗在 `poems/<名称>/`。车辆和动物都是 `figures` 类型（形象合集：每个形象一张原图、一句介绍、一段关键帧动画），展开成其中的每一个形象。
+`content/library.yaml` 列出各组和组内的项，每项是 `content/` 下含 `item.yaml` 的目录：车辆在 `vehicles/`，动物在 `animals/`，故事在 `stories/<名称>/`，古诗在 `poems/<名称>/`。车辆和动物都是 `figures` 类型（形象合集：每个形象一张原图、一句介绍、一段关键帧动画），展开成其中的每一个形象。一项的文案、画面描述和生成文件都在它自己的目录里。
 
 ```yaml
 groups:
-  - title: 工程车       # 列表行、状态栏标题，切组时朗读
+  - id: vehicles        # 组名朗读存为 content/groups/vehicles.ogg
+    title: 工程车       # 列表行、状态栏标题，切组时朗读
     items: [vehicles]
-  - title: 小故事
+  - id: stories
+    title: 小故事
     items: [stories/get-dressed, stories/brush-teeth]
 ```
 
 ```yaml
 type: story
-title: 静夜思           # 状态栏标题，翻到时朗读
+title: 静夜思           # 状态栏标题，翻到时朗读（title.ogg）
 author: 李白            # 可选：标题朗读成「静夜思，李白」
-pages:
-  - image: p01.png
-    say: 床前明月光。
+pages:                  # 第 n 页：插图 p0n.png，旁白 p0n.ogg
+  - say: 床前明月光。
+    art:                # 插图的画面描述
+      ref: stories/rainy-day/p01.png   # 参考图：借画风或保持角色一致
+      prompt: 夜晚的屋里，一位穿长袍的古代诗人坐在床边……
+  - say: 疑是地上霜。
+    art: 床前的地上铺着一片白白的月光……   # 只写描述时参考本目录的 p01.png
 ```
 
 ```yaml
 type: figures
-title: 工程车
+title: 小动物
 figures:
-  - id: excavator      # content/vehicles/excavator/，含 base.png 和关键帧
-    name: 挖掘机
-    intro: 挖掘机，挖呀挖。轰隆隆！   # 翻到时朗读，同时播放 frames
+  - id: cat            # content/animals/cat/：base.png、关键帧、intro.ogg
+    name: 小猫
+    intro: 小花猫，喵喵叫。喵——！     # 翻到时朗读，同时播放 frames
+    art:               # 键是文件名：base.png 画原图（必须写 ref），其余在 base.png 上改出关键帧
+      base.png:
+        ref: vehicles/bus/base.png
+        prompt: 一只圆脸大眼睛的小猫……
+      k1.png: 小猫张开小嘴在叫……
     frames:
-      - {image: k1.png, region: [0, 40, 690, 1046], ms: 400}
+      - {image: k1.png, region: [1177, 426, 202, 154], ms: 600}
       - {image: base.png}
 ```
+
+- `ref` 不含 `/` 时相对图片所在目录，否则相对 `content/`。
 
 - 图片是白底纯黑线稿，任意尺寸，裁白边后等比缩放进状态栏下方区域，按 128 二值化成 1bpp。
 - `region` 是源图像素 `[x, y, w, h]`，必须在图内：关键帧只取这个区域，其余用 `base.png`。AI 改图时不动的部分会有细微偏移，靠它保证逐像素一致，局刷时车身不闪。同一形象的所有帧共用一个缩放位置。
 - `ms` 是这一帧刷完后的停留时间。
 
-### 生成插图和关键帧
-
-用 Codex 的图像生成，基于已有线稿改图或参考画风，保持风格一致：
-
-```bash
-tools/art/gen.sh vehicles   # 按 tools/art/vehicles.tsv 生成车辆关键帧
-tools/art/gen.sh animals    # 按 tools/art/animals.tsv 先画动物原图 base.png，再生成关键帧
-tools/art/gen.sh stories    # 按 tools/art/stories.tsv 生成故事插图：同一个故事按页顺序画，后面的页参考第 1 页保持角色一致
-tools/art/gen.sh poems      # 按 tools/art/poems.tsv 生成古诗插图，方式同 stories
-tools/chalk region base.png k1.png out.png   # 建议关键帧的 region，并输出标注图
-```
-
-tsv 的列格式见 `gen.sh` 开头的注释。已存在的文件会跳过；想重画某一张，删掉后再运行。
-
-新增一个故事或一首诗：在 `stories.tsv` / `poems.tsv` 里按页写画面描述，生成插图后新建 `content/stories/<名称>/item.yaml`（或 `poems/`）写旁白，加进 `library.yaml` 对应的组。页数不限。
+新增一个故事或一首诗：新建 `content/stories/<名称>/item.yaml`（或 `poems/`），按页写旁白和画面描述，加进 `library.yaml` 对应的组，运行 `chalk gen` 后检查插图和朗读，不满意的 `--redo`。页数不限。
 
 ## 调试
 

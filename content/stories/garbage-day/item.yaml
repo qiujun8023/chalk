@@ -1,17 +1,27 @@
 type: story
 title: 垃圾车来啦
 pages:
-  - image: p01.png
-    say: 天亮啦，小朋友提着垃圾袋走出家门。
-  - image: p02.png
-    say: 把垃圾袋放进垃圾桶，盖好盖子。
-  - image: p03.png
-    say: 嘀嘀嘀，垃圾车来啦！
-  - image: p04.png
-    say: 垃圾车举起垃圾桶，举高高，哗啦啦，倒进去！
-  - image: p05.png
-    say: 一桶，两桶，三桶，全都倒干净啦。
-  - image: p06.png
-    say: 洒水车跟在后面，沙沙沙，把街道洗得干干净净。
-  - image: p07.png
-    say: 谢谢你，垃圾车！明天见！
+  - say: 天亮啦，小朋友提着垃圾袋走出家门。
+    art:
+      ref: stories/construction-day/p01.png
+      prompt: 清晨的街道：左上角一个带光线的太阳，一排简单的小房子，每家门口放着一个带盖子的垃圾桶，一个圆脸短发的小男孩提着一个系好的垃圾袋站在家门口。不要画车辆
+  - say: 把垃圾袋放进垃圾桶，盖好盖子。
+    art: 那个小男孩把垃圾袋放进家门口的垃圾桶里，一只手扶着打开的桶盖
+  - say: 嘀嘀嘀，垃圾车来啦！
+    art:
+      ref: vehicles/garbage-truck/base.png
+      prompt: 参考图里的这辆垃圾车沿着街道向右开来，车轮后面有几条表示速度的短线，路边有一排带盖子的垃圾桶
+  - say: 垃圾车举起垃圾桶，举高高，哗啦啦，倒进去！
+    art:
+      ref: vehicles/garbage-truck/base.png
+      prompt: 参考图里的这辆垃圾车（车头、车厢、车尾的外形与参考图完全一样，车头朝右）停在路边，车尾的翻桶机构把一个带盖子的垃圾桶举高翻倒，桶口往车厢里落下几块垃圾
+  - say: 一桶，两桶，三桶，全都倒干净啦。
+    art:
+      ref: vehicles/garbage-truck/base.png
+      prompt: 参考图里的这辆垃圾车继续往前开，身后路边整齐排着三个已经倒空、盖子打开的垃圾桶
+  - say: 洒水车跟在后面，沙沙沙，把街道洗得干干净净。
+    art:
+      ref: vehicles/sprinkler-truck/base.png
+      prompt: 参考图里的这辆洒水车在街道上往前开，喷水口向地面洒出一片水花，地面上有几道湿湿的水纹
+  - say: 谢谢你，垃圾车！明天见！
+    art: 那个小男孩站在干净的街道上举手挥手，远处一辆小小的垃圾车向右开走，天上有一朵云

@@ -1,5 +1,5 @@
 # push 到 master 时验证能从仓库完整构建；推 v* tag 时再把整片镜像发到 Release。
-# 朗读音频全部来自已入库的 content/tts/，不配 TTS key：缓存未命中直接失败。
+# 插图和朗读都已入库，chalk build 不调 AI；生成文件缺失或与 gen.lock 不一致时失败。
 name: build
 
 on:
@@ -37,7 +37,7 @@ jobs:
         working-directory: tools
         run: go vet . && go build -o chalk . && ./chalk build
 
-      # 构建会删掉没用到的音频；工作区有变化说明 content/tts/ 与文案不同步，也会让固件版本号带「+」。
+      # 构建不应改动仓库；工作区有变化也会让固件版本号带「+」。
       - run: git status --porcelain && test -z "$(git status --porcelain)"
 
       - name: 固件

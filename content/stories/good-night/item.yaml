@@ -1,15 +1,27 @@
 type: story
 title: 晚安，小车车
 pages:
-  - image: p01.png
-    say: 天黑了，月亮出来了，星星眨眼睛。
-  - image: p02.png
-    say: 巴士送完最后一位乘客，回到车站睡觉啦。
-  - image: p03.png
-    say: 出租车关上顶灯，开进车库。
-  - image: p04.png
-    say: 洒水车忙了一整天，打了个大哈欠。
-  - image: p05.png
-    say: 警车也停好啦，警灯不亮了。
-  - image: p06.png
-    say: 小车车们都睡着了。晚安，宝贝。
+  - say: 天黑了，月亮出来了，星星眨眼睛。
+    art:
+      ref: vehicles/bus/base.png
+      prompt: 夜晚的小镇：画面右上角一弯月亮和几颗星星，下面是一排简单的小房子，窗户亮着，地面一条横线。不要画车辆
+  - say: 巴士送完最后一位乘客，回到车站睡觉啦。
+    art:
+      ref: vehicles/bus/base.png
+      prompt: 参考图里的这辆巴士停在车站的站牌旁边，车门关着，天上有月亮和星星
+  - say: 出租车关上顶灯，开进车库。
+    art:
+      ref: vehicles/taxi/base.png
+      prompt: 参考图里的这辆出租车停进一个简单的车库里，车库门半开，天上有月亮
+  - say: 洒水车忙了一整天，打了个大哈欠。
+    art:
+      ref: vehicles/sprinkler-truck/base.png
+      prompt: 参考图里的这辆洒水车停在路边，车头上方画一个表示打哈欠的“Z”形小符号，天上有星星
+  - say: 警车也停好啦，警灯不亮了。
+    art:
+      ref: vehicles/police-car/base.png
+      prompt: 参考图里的这辆警车安静地停在路边，车身外形、车门上的“公安”两个字和车顶警灯都与参考图完全一样，警灯不亮，旁边一盏路灯，天上有月亮
+  - say: 小车车们都睡着了。晚安，宝贝。
+    art:
+      ref: vehicles/bus/base.png
+      prompt: 夜晚，地面上从左到右排队停着缩小的巴士、出租车、洒水车和警车，每辆车上方都有一个小小的“Z”，天上有月亮和星星

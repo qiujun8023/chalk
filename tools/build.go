@@ -76,7 +76,6 @@ type builder struct {
 	content string
 	fsDir   string
 	preview string
-	tts     *tts
 	bytes   int64
 	files   int
 }
@@ -102,12 +101,9 @@ func (b *builder) writeFrame(rel string, f *frame) error {
 	return writePNG(pv, f.gray())
 }
 
-func (b *builder) writeSpeech(rel, text string) error {
-	src, err := b.tts.speak(text)
-	if err != nil {
-		return err
-	}
-	return b.copyFile(rel, src)
+// writeAudio 把 content/ 下已生成的朗读 src 复制到镜像的 rel。
+func (b *builder) writeAudio(rel, src string) error {
+	return b.copyFile(rel, filepath.Join(b.content, filepath.FromSlash(src)))
 }
 
 func (b *builder) copyFile(rel, src string) error {
@@ -123,29 +119,36 @@ func (b *builder) build() error {
 	if err := readYAML(filepath.Join(b.content, "library.yaml"), &lib); err != nil {
 		return err
 	}
+	assets, err := collectAssets(b.content, &lib)
+	if err != nil {
+		return err
+	}
+	if err := checkAssets(b.content, assets); err != nil {
+		return err
+	}
 	for _, d := range []string{b.fsDir, b.preview} {
 		if err := os.RemoveAll(d); err != nil {
 			return err
 		}
 	}
 	out := libraryOut{VolumeSound: "ui/volume.ogg", Font16: "ui/font16.bin", Font12: "ui/font12.bin"}
-	beep := filepath.Join(b.tts.cacheDir, "volume.ogg")
-	b.tts.keep(beep)
-	if _, err := os.Stat(beep); err != nil {
-		if err := os.MkdirAll(b.tts.cacheDir, 0o755); err != nil {
-			return err
-		}
-		if err := volumeBeep(beep); err != nil {
-			return err
-		}
-	}
-	if err := b.copyFile(out.VolumeSound, beep); err != nil {
+	beep := filepath.Join(b.fsDir, filepath.FromSlash(out.VolumeSound))
+	if err := os.MkdirAll(filepath.Dir(beep), 0o755); err != nil {
 		return err
 	}
+	if err := volumeBeep(beep); err != nil {
+		return err
+	}
+	st, err := os.Stat(beep)
+	if err != nil {
+		return err
+	}
+	b.bytes += st.Size()
+	b.files++
 	captions := printableASCII() + firmwareLabels
 	for gi, g := range lib.Groups {
 		o := groupOut{Name: g.Title, TitleAudio: fmt.Sprintf("groups/%d.ogg", gi+1)}
-		if err := b.writeSpeech(o.TitleAudio, g.Title); err != nil {
+		if err := b.writeAudio(o.TitleAudio, "groups/"+g.ID+".ogg"); err != nil {
 			return err
 		}
 		for _, name := range g.Items {
@@ -211,11 +214,7 @@ func (b *builder) buildItem(name string) ([]entryOut, error) {
 		return out, nil
 	}
 	e := entryOut{Type: "story", Name: it.Title, TitleAudio: name + "/title.ogg"}
-	spoken := it.Title
-	if it.Author != "" {
-		spoken += "，" + it.Author
-	}
-	if err := b.writeSpeech(e.TitleAudio, spoken); err != nil {
+	if err := b.writeAudio(e.TitleAudio, e.TitleAudio); err != nil {
 		return nil, err
 	}
 	for i, p := range it.Pages {
@@ -230,7 +229,7 @@ func (b *builder) buildItem(name string) ([]entryOut, error) {
 
 func (b *builder) buildPage(name, dir string, i int, p pageSrc) (*pageOut, error) {
 	stem := fmt.Sprintf("%s/p%02d", name, i+1)
-	g, err := loadGray(filepath.Join(dir, p.Image))
+	g, err := loadGray(filepath.Join(dir, fmt.Sprintf("p%02d.png", i+1)))
 	if err != nil {
 		return nil, err
 	}
@@ -239,7 +238,7 @@ func (b *builder) buildPage(name, dir string, i int, p pageSrc) (*pageOut, error
 	if err := b.writeFrame(stem+".img", c.frame()); err != nil {
 		return nil, err
 	}
-	if err := b.writeSpeech(stem+".ogg", p.Say); err != nil {
+	if err := b.writeAudio(stem+".ogg", stem+".ogg"); err != nil {
 		return nil, err
 	}
 	return &pageOut{Img: stem + ".img", Audio: stem + ".ogg"}, nil
@@ -284,7 +283,7 @@ func (b *builder) buildFigure(name, dir string, fig figureSrc) (*entryOut, error
 	if err := b.writeFrame(out.Base, baseFrame); err != nil {
 		return nil, err
 	}
-	if err := b.writeSpeech(out.Intro, fig.Intro); err != nil {
+	if err := b.writeAudio(out.Intro, out.Intro); err != nil {
 		return nil, err
 	}
 

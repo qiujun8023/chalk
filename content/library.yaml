@@ -1,12 +1,15 @@
-# 组和组内项的顺序。每项是 content/ 下含 item.yaml 的目录；figures 类型的项（车辆、动物）展开成其中的每一个形象。
+# 组和组内项的顺序。组名朗读存为 content/groups/<id>.ogg。每项是 content/ 下含 item.yaml 的目录；figures 类型的项（车辆、动物）展开成其中的每一个形象。
 groups:
-  - title: 工程车
+  - id: vehicles
+    title: 工程车
     items:
       - vehicles
-  - title: 小动物
+  - id: animals
+    title: 小动物
     items:
       - animals
-  - title: 小故事
+  - id: stories
+    title: 小故事
     items:
       - stories/get-dressed
       - stories/brush-teeth
@@ -24,7 +27,8 @@ groups:
       - stories/snowman
       - stories/good-night
       - stories/sleepy-piggy
-  - title: 古诗
+  - id: poems
+    title: 古诗
     items:
       - poems/yong-e
       - poems/yi-qu-er-san-li

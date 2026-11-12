@@ -6,7 +6,6 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -17,9 +16,11 @@ import (
 )
 
 // 设备端只解码 Ogg Opus：24 kHz 单声道 32 kbps，约 4 KB/s。
+// bitexact 固定 Ogg 流序列号和编码器标签，同样的输入每次输出相同，构建结果可复现。
 func encodeOpus(args []string, out string) error {
 	full := append([]string{"-hide_banner", "-loglevel", "error", "-y"}, args...)
-	full = append(full, "-ac", "1", "-ar", "24000", "-c:a", "libopus", "-b:a", "32k", "-f", "ogg", out)
+	full = append(full, "-ac", "1", "-ar", "24000", "-c:a", "libopus", "-b:a", "32k",
+		"-fflags", "+bitexact", "-flags:a", "+bitexact", "-f", "ogg", out)
 	cmd := exec.Command("ffmpeg", full...)
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
@@ -30,75 +31,40 @@ func encodeOpus(args []string, out string) error {
 }
 
 type tts struct {
-	cacheDir string
-	apiKey   string
-	baseURL  string
-	model    string
-	voice    string
-	used     map[string]bool // 本次构建用到的缓存文件，prune 时保留
+	apiKey  string
+	baseURL string
+	model   string
+	voice   string
 }
 
 // 用 OpenAI 兼容的流式 chat/completions 接口合成（默认小米 MiMo、音色冰糖）。
-// key 取 TTS_API_KEY，没有时取 CHALK_TTS_API_KEY（~/.config/secrets/env 里的名字）；缓存命中时不需要。
-func newTTS(cacheDir string) *tts {
+// key 取 TTS_API_KEY，没有时取 CHALK_TTS_API_KEY（~/.config/secrets/env 里的名字）；只有 chalk gen 合成时需要。
+func newTTS() *tts {
 	return &tts{
-		cacheDir: cacheDir,
-		apiKey:   envOr("TTS_API_KEY", os.Getenv("CHALK_TTS_API_KEY")),
-		baseURL:  strings.TrimRight(envOr("TTS_BASE_URL", "https://api.xiaomimimo.com/v1"), "/"),
-		model:    envOr("TTS_MODEL", "mimo-v2.5-tts"),
-		voice:    envOr("TTS_VOICE", "冰糖"),
-		used:     map[string]bool{},
+		apiKey:  envOr("TTS_API_KEY", os.Getenv("CHALK_TTS_API_KEY")),
+		baseURL: strings.TrimRight(envOr("TTS_BASE_URL", "https://api.xiaomimimo.com/v1"), "/"),
+		model:   envOr("TTS_MODEL", "mimo-v2.5-tts"),
+		voice:   envOr("TTS_VOICE", "冰糖"),
 	}
 }
 
-func (t *tts) provider() string { return t.model + ":" + t.voice + ":ogg24k32" }
+// ttsProvider 是计入 gen.lock 的合成参数：换模型或音色后全部朗读过期。
+func ttsProvider() string {
+	t := newTTS()
+	return t.model + ":" + t.voice + ":ogg24k32"
+}
 
-// speak 返回缓存里的 ogg 路径，相同文本和音色只合成一次。
-func (t *tts) speak(text string) (string, error) {
-	text = strings.TrimSpace(text)
-	if text == "" {
-		return "", errors.New("朗读文本为空")
-	}
-	out := filepath.Join(t.cacheDir, hashOf(t.provider(), text)+".ogg")
-	t.used[out] = true
-	if _, err := os.Stat(out); err == nil {
-		return out, nil
-	}
-	if err := os.MkdirAll(t.cacheDir, 0o755); err != nil {
-		return "", err
-	}
-	if t.apiKey == "" {
-		return "", errors.New("缓存未命中，需要设置 TTS_API_KEY 或 CHALK_TTS_API_KEY")
+// synth 把 text 合成为 out（Ogg Opus），先写临时文件，成功后再替换。
+func (t *tts) synth(text, out string) error {
+	if err := os.MkdirAll(filepath.Dir(out), 0o755); err != nil {
+		return err
 	}
 	tmp := out + ".tmp.ogg"
 	if err := t.speakRemote(text, tmp); err != nil {
 		os.Remove(tmp)
-		return "", fmt.Errorf("TTS %q: %w", text, err)
+		return fmt.Errorf("TTS %q: %w", text, err)
 	}
-	return out, os.Rename(tmp, out)
-}
-
-// keep 把不是 speak 生成的缓存文件（提示音）标记为在用。
-func (t *tts) keep(p string) { t.used[p] = true }
-
-// prune 删除本次构建没用到的缓存文件（改过的旧文案、中断留下的临时文件），返回删除个数。
-func (t *tts) prune() (int, error) {
-	entries, err := os.ReadDir(t.cacheDir)
-	if err != nil {
-		return 0, err
-	}
-	n := 0
-	for _, e := range entries {
-		p := filepath.Join(t.cacheDir, e.Name())
-		if e.IsDir() || t.used[p] {
-			continue
-		}
-		if err := os.Remove(p); err != nil {
-			return n, err
-		}
-		n++
-	}
-	return n, nil
+	return os.Rename(tmp, out)
 }
 
 func (t *tts) speakRemote(text, out string) error {

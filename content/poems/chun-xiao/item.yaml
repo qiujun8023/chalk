@@ -2,13 +2,15 @@ type: story
 title: 春晓
 author: 孟浩然
 pages:
-  - image: p01.png
-    say: 春眠不觉晓。
-  - image: p02.png
-    say: 处处闻啼鸟。
-  - image: p03.png
-    say: 夜来风雨声。
-  - image: p04.png
-    say: 花落知多少。
-  - image: p05.png
-    say: 春眠不觉晓，处处闻啼鸟。夜来风雨声，花落知多少。
+  - say: 春眠不觉晓。
+    art:
+      ref: stories/rainy-day/p01.png
+      prompt: 一个小朋友在床上睡得香香的，窗外的太阳已经升起来了
+  - say: 处处闻啼鸟。
+    art: 窗外的树上有好几只小鸟在叫，嘴边有表示叫声的短线，那个小朋友坐起来竖着耳朵听
+  - say: 夜来风雨声。
+    art: 夜晚，窗外刮着风下着雨，树枝被风吹弯了
+  - say: 花落知多少。
+    art: 早上，那个小朋友推开门，院子的地上落满了花瓣
+  - say: 春眠不觉晓，处处闻啼鸟。夜来风雨声，花落知多少。
+    art: 春天早晨的院子：树上有小鸟，地上有落花，那个小朋友趴在窗口往外看
