@@ -16,9 +16,12 @@ Chalk（粉笔）是跑在 ZecTrix Note4（ESP32-S3 + 4.2" 400×300 黑白墨水
 - **古诗**：先念「诗名，作者」，然后一句一页，最后一页把全诗连起来念一遍，翻页方式同小故事。
 
 <p>
-  <img src="docs/images/anim-excavator.png" width="32%" alt="挖掘机">
-  <img src="docs/images/anim-fire-truck.png" width="32%" alt="消防车">
-  <img src="docs/images/anim-elephant.png" width="32%" alt="大象">
+  <img src="docs/images/anim-excavator.png" width="48%" alt="工程车：挖掘机">
+  <img src="docs/images/anim-cat.png" width="48%" alt="小动物：小猫">
+</p>
+<p>
+  <img src="docs/images/anim-story.png" width="48%" alt="小故事：小兔穿衣服">
+  <img src="docs/images/anim-poem.png" width="48%" alt="古诗：咏鹅">
 </p>
 
 有哪些组、组里有哪些项、顺序如何，见 `content/library.yaml`。
