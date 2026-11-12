@@ -96,16 +96,26 @@ Chalk（粉笔）是跑在 ZecTrix Note4（ESP32-S3 + 4.2" 400×300 黑白墨水
 | --- | --- |
 | `firmware/` | ESP-IDF 5.5 固件 |
 | `tools/` | Go 内容编译器 `chalk`、字库源（`fonts/`，Zfull 的 LVGL 点阵）、Codex 生图脚本（`art/`）、串口调试脚本 |
-| `content/` | 源内容：线稿、关键帧、文案 |
+| `content/` | 源内容：线稿、关键帧、文案，以及合成好的朗读音频（`tts/`） |
 | `docs/images/` | README 配图：设备样机和宣传图 |
+| `.github/workflows/` | CI：构建内容和固件，推 tag 时发布整片镜像 |
 | `build/` | 编译产物（不入库）：`fs/`、`storage.bin`、`preview/`、生图日志 `art-logs/` |
+
+## 直接烧录
+
+[Releases](https://github.com/qiujun8023/chalk/releases) 里的 `chalk-<版本>.bin` 是含固件和内容的整片镜像，不用构建：
+
+```bash
+uvx esptool --chip esp32s3 write_flash 0x0 chalk-<版本>.bin
+```
+
+整片烧录会清掉设备上保存的位置和音量。
 
 ## 构建与烧录
 
-需要 Go、ffmpeg（带 libopus）、uv（打包镜像时用 `uvx` 运行固定版本的 littlefs-python）、ESP-IDF 5.5。
+需要 Go、ffmpeg（带 libopus）、uv（打包镜像时用 `uvx` 运行固定版本的 littlefs-python）、ESP-IDF 5.5。朗读音频已在仓库里，没改朗读文案时不需要 TTS key。
 
 ```bash
-set -a; . ~/.config/secrets/env; set +a   # 提供 CHALK_TTS_API_KEY
 cd tools && go build -o chalk . && ./chalk build
 cd ../firmware && idf.py -p /dev/cu.usbmodem2101 flash
 ```
@@ -114,10 +124,11 @@ cd ../firmware && idf.py -p /dev/cu.usbmodem2101 flash
 - 重新烧内容镜像会清掉设备上保存的位置和音量。
 - `build/preview/` 里有每一帧的 PNG 和每个形象的动画 `anim.gif`，不用烧录就能检查效果。
 - storage 分区大小从 `firmware/partitions.csv` 读取。
+- 推送 `v*` tag 后，CI 构建并把整片镜像（`idf.py merge-bin`）发布到同名 Release；CI 不配 TTS key，`content/tts/` 缺音频时构建失败。
 
 ### TTS
 
-朗读用 OpenAI 兼容的流式 `chat/completions` 接口合成。
+朗读用 OpenAI 兼容的流式 `chat/completions` 接口合成，改了朗读文案后需要 key：`set -a; . ~/.config/secrets/env; set +a` 提供 `CHALK_TTS_API_KEY`。
 
 | 变量 | 默认 |
 | --- | --- |
@@ -126,7 +137,7 @@ cd ../firmware && idf.py -p /dev/cu.usbmodem2101 flash
 | `TTS_MODEL` | `mimo-v2.5-tts` |
 | `TTS_VOICE` | `冰糖` |
 
-合成结果按文本缓存在 `content/.cache/tts/`，每次构建结束删掉这次没用到的缓存。音频统一转成 24 kHz 单声道 32 kbps 的 Ogg Opus。
+合成结果按音色和文本存在 `content/tts/` 并入库，每次构建结束删掉这次没用到的文件。音频统一转成 24 kHz 单声道 32 kbps 的 Ogg Opus。
 
 ## 内容格式
 

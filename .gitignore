@@ -1,5 +1,4 @@
 /build/
-/content/.cache/
 /firmware/build/
 /firmware/managed_components/
 /firmware/sdkconfig

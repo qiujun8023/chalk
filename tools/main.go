@@ -30,7 +30,7 @@ func main() {
 		content: filepath.Join(root, "content"),
 		fsDir:   filepath.Join(buildDir, "fs"),
 		preview: filepath.Join(buildDir, "preview"),
-		tts:     newTTS(filepath.Join(root, "content", ".cache", "tts")),
+		tts:     newTTS(filepath.Join(root, "content", "tts")),
 	}
 	if err := b.build(); err != nil {
 		fatal(err)
