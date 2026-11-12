@@ -103,10 +103,10 @@ Chalk（粉笔）是跑在 ZecTrix Note4（ESP32-S3 + 4.2" 400×300 黑白墨水
 
 ## 直接烧录
 
-[Releases](https://github.com/qiujun8023/chalk/releases) 里的 `chalk-zectrix-note4-<版本>-full.bin` 是含固件和内容的整片镜像，不用构建，校验值在同目录的 `-sha256.txt`：
+[Releases](https://github.com/qiujun8023/chalk/releases) 里的 `chalk-<版本>.bin` 是含固件和内容的整片镜像，不用构建：
 
 ```bash
-uvx esptool --chip esp32s3 write_flash 0x0 chalk-zectrix-note4-<版本>-full.bin
+uvx esptool --chip esp32s3 write_flash 0x0 chalk-<版本>.bin
 ```
 
 整片烧录会清掉设备上保存的位置和音量。
@@ -124,7 +124,7 @@ cd ../firmware && idf.py -p /dev/cu.usbmodem2101 flash
 - 重新烧内容镜像会清掉设备上保存的位置和音量。
 - `build/preview/` 里有每一帧的 PNG 和每个形象的动画 `anim.gif`，不用烧录就能检查效果。
 - storage 分区大小从 `firmware/partitions.csv` 读取。
-- master 上的 CI（`build.yml`）是滚动构建，验证能从仓库完整构建；生成文件缺失或过期时失败。
+- CI（`build.yml`）在 master 上做滚动构建，验证能从仓库完整构建；生成文件缺失或过期时失败。
 
 ### 发布版本
 
@@ -138,11 +138,11 @@ git push origin v0.1.0
 ```text
 Chalk v0.1.0
 
-- 内容：新增 ...
-- 固件：修复 ...
+- 新增 ...
+- 修复 ...
 ```
 
-`release.yml` 校验 tag（格式、annotated、正文非空、是最新的 tag），构建整片镜像（`idf.py merge-bin`），把它和 sha256 上传到同名 Release。固件版本号直接取 tag，不用另改文件。
+CI 校验 tag（格式、annotated、正文非空），构建整片镜像（`idf.py merge-bin`），以 `chalk-<版本>.bin` 上传到同名 Release。固件版本号直接取 tag，不用另改文件。
 
 ### 生成插图和朗读
 
