@@ -30,6 +30,8 @@ jobs:
           cache-dependency-path: tools/go.sum
 
       - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: false # 只用 uvx 跑固定版本的 littlefs-python，没有依赖文件可做缓存键
 
       - name: 内容
         working-directory: tools
