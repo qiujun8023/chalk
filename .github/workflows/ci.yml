@@ -1,0 +1,127 @@
+name: CI
+
+# master 上是滚动构建；推 vX.Y.Z annotated tag 时再发布到同名 Release，Release notes 取 tag message 正文。
+# 插图和朗读都已入库，chalk build 不调 AI；生成文件缺失或与 gen.lock 不一致时失败。
+on:
+  push:
+    branches: [master]
+    tags: ['v*'] # tag 推送不按 paths-ignore 过滤
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - LICENSE
+      - LICENSE-CONTENT
+      - .gitignore
+  pull_request:
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - LICENSE
+      - LICENSE-CONTENT
+      - .gitignore
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  # 内容和固件在同一个容器里构建：chalk build 需要 Go 和 ffmpeg，esp-idf-ci-action 只能跑 idf.py。
+  firmware:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    container: espressif/idf:v5.5.6 # 与 firmware/.envrc 一致
+    defaults:
+      run:
+        shell: bash
+    steps:
+      # 完整拉取：固件版本号要从 tag 得到（firmware/main/version.cmake）。
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      # 容器内仓库属主不同，不加的话 git 拒绝读取，固件版本号会变成「-」。
+      - name: Mark workspace safe
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+      - name: Install ffmpeg
+        run: apt-get update && apt-get install -y --no-install-recommends ffmpeg
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: tools/go.mod
+          cache-dependency-path: tools/go.sum
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v10
+        with:
+          enable-cache: false # 只用 uvx 跑固定版本的 littlefs-python，没有依赖文件可做缓存键
+
+      - name: Build content
+        working-directory: tools
+        run: go vet . && go build -o chalk . && ./chalk build
+
+      # 构建不应改动仓库；工作区有变化也会让固件版本号带「+」。
+      - name: Check clean tree
+        run: git status --porcelain && test -z "$(git status --porcelain)"
+
+      - name: ESP-IDF build
+        working-directory: firmware
+        run: |
+          . "$IDF_PATH/export.sh"
+          idf.py build && idf.py merge-bin -o chalk-full.bin
+
+      - name: Upload firmware
+        uses: actions/upload-artifact@v7
+        with:
+          name: firmware
+          path: firmware/build/chalk-full.bin
+          if-no-files-found: error
+          retention-days: 14
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: firmware
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      # 完整拉取，annotated tag 才不会被拉成轻量 tag。
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Validate tag
+        run: |
+          set -euo pipefail
+          [[ "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "tag 必须是 vX.Y.Z" >&2; exit 1; }
+          [ "$(git cat-file -t "$GITHUB_REF_NAME")" = tag ] || { echo "必须是 annotated tag，message 正文即 Release notes" >&2; exit 1; }
+          git for-each-ref "refs/tags/$GITHUB_REF_NAME" --format='%(contents:body)' > "$RUNNER_TEMP/notes.md"
+          grep -q '[^[:space:]]' "$RUNNER_TEMP/notes.md" || { echo "tag message 正文至少要有一条变更" >&2; exit 1; }
+
+      - name: Download firmware
+        uses: actions/download-artifact@v8
+        with:
+          name: firmware
+          path: ${{ runner.temp }}/firmware
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          bin="$RUNNER_TEMP/chalk-$GITHUB_REF_NAME-full.bin"
+          mv "$RUNNER_TEMP/firmware/chalk-full.bin" "$bin"
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release edit "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file "$RUNNER_TEMP/notes.md"
+            gh release upload "$GITHUB_REF_NAME" "$bin" --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" "$bin" --title "$GITHUB_REF_NAME" --notes-file "$RUNNER_TEMP/notes.md"
+          fi
