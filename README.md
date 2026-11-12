@@ -1,5 +1,7 @@
 # Chalk
 
+![Chalk](docs/images/hero.jpg)
+
 Chalk（粉笔）是跑在 ZecTrix Note4（ESP32-S3 + 4.2" 400×300 黑白墨水屏）上的儿童绘本、古诗，以及工程车和小动物动画。
 
 内容在 Mac 上编译成 LittleFS 镜像，和固件一起烧进设备。设备不联网、没有后端，只负责显示和播放。
@@ -12,6 +14,12 @@ Chalk（粉笔）是跑在 ZecTrix Note4（ESP32-S3 + 4.2" 400×300 黑白墨水
 - **小动物**：12 种动物，播放方式同工程车。
 - **小故事**：先念标题，再逐页播放：每页一张插图配一段旁白，念完停 1.5 秒翻到下一页，播到最后一页停下。
 - **古诗**：先念「诗名，作者」，然后一句一页，最后一页把全诗连起来念一遍，翻页方式同小故事。
+
+<p>
+  <img src="docs/images/anim-excavator.png" width="32%" alt="挖掘机">
+  <img src="docs/images/anim-fire-truck.png" width="32%" alt="消防车">
+  <img src="docs/images/anim-elephant.png" width="32%" alt="大象">
+</p>
 
 有哪些组、组里有哪些项、顺序如何，见 `content/library.yaml`。
 
@@ -32,6 +40,11 @@ Chalk（粉笔）是跑在 ZecTrix Note4（ESP32-S3 + 4.2" 400×300 黑白墨水
 - 刷屏期间连按的上下键累加步数，一次跳到目标、只刷一屏；其他按键只执行最后一个。
 - 闲置 3 分钟且没插 USB 时深睡，画面保留。确认键或下键唤醒，唤醒的那次按键直接执行；上键不能唤醒。
 - 深睡前保存每组停留的项、当前页、音量和屏幕上的整帧，唤醒后直接局刷。
+
+<p>
+  <img src="docs/images/list.png" width="48%" alt="列表">
+  <img src="docs/images/settings.png" width="48%" alt="设置">
+</p>
 
 ### 列表
 
@@ -83,6 +96,7 @@ Chalk（粉笔）是跑在 ZecTrix Note4（ESP32-S3 + 4.2" 400×300 黑白墨水
 | `firmware/` | ESP-IDF 5.5 固件 |
 | `tools/` | Go 内容编译器 `chalk`、字库源（`fonts/`，Zfull 的 LVGL 点阵）、Codex 生图脚本（`art/`）、串口调试脚本 |
 | `content/` | 源内容：线稿、关键帧、文案 |
+| `docs/images/` | README 配图：设备样机和宣传图 |
 | `build/` | 编译产物（不入库）：`fs/`、`storage.bin`、`preview/`、生图日志 `art-logs/` |
 
 ## 构建与烧录
